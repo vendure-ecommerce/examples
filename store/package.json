@@ -1,22 +1,28 @@
 {
   "name": "vendure-main-store",
-  "version": "1.0.0",
-  "description": "Main Vendure store package",
-  "main": "dist/index.js",
+  "version": "0.1.0",
+  "private": true,
   "scripts": {
-    "dev": "ts-node src/index.ts",
+    "dev:server": "ts-node ./src/index.ts",
+    "dev:worker": "ts-node ./src/index-worker.ts",
+    "dev": "concurrently npm:dev:*",
     "build": "tsc",
-    "start": "node dist/index.js",
-    "clean": "rimraf dist"
+    "start:server": "node ./dist/index.js",
+    "start:worker": "node ./dist/index-worker.js",
+    "start": "concurrently npm:start:*"
   },
   "dependencies": {
-    "@vendure/core": "^2.0.0",
-    "@vendure/admin-ui": "^2.0.0",
-    "@vendure/create": "^2.0.0",
-    "better-sqlite3": "^8.0.0"
+    "@vendure/admin-ui-plugin": "3.4.0",
+    "@vendure/asset-server-plugin": "3.4.0",
+    "@vendure/core": "3.4.0",
+    "@vendure/email-plugin": "3.4.0",
+    "@vendure/graphiql-plugin": "3.4.0",
+    "better-sqlite3": "11.10.0",
+    "dotenv": "17.2.1"
   },
-  "devDependencies": {},
-  "keywords": ["vendure", "ecommerce", "main-store"],
-  "author": "",
-  "license": "MIT"
+  "devDependencies": {
+    "@vendure/cli": "3.4.0",
+    "concurrently": "9.2.0",
+    "typescript": "5.8.2"
+  }
 }
