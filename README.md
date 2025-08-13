@@ -1,153 +1,98 @@
-# Vendure Templates Workspace
+# Vendure Examples
 
-A PNPM workspace monorepo containing a main Vendure store and multiple template implementations.
+A collection of portable Vendure configurations and examples that can be copied to any Vendure project.
 
-## Structure
-
-```
-vendure-templates/
-├── store/                  # Main Vendure store package
-├── templates/             # Template stores directory
-├── scripts/               # Utility scripts
-├── pnpm-workspace.yaml   # PNPM workspace configuration
-└── package.json          # Root workspace package.json
-```
-
-## Getting Started
-
-### Prerequisites
-- Node.js (v16 or higher)
-- PNPM (v7 or higher)
-
-### Installation
-
-1. Clone the repository
-2. Install dependencies:
-   ```bash
-   pnpm install
-   ```
-
-### Running the Main Store
+## Quick Start
 
 ```bash
-# Development mode
-pnpm dev:store
+# Install dependencies
+pnpm install
 
-# Build
-pnpm build:store
+# Create a new example
+pnpm create-example my-feature
+
+# Build the example
+pnpm --filter vendure-example-my-feature build
+
+# Run the example (optional)
+pnpm --filter vendure-example-my-feature dev
 ```
 
-The main store will be available at:
-- Shop API: http://localhost:3000/shop-api
-- Admin API: http://localhost:3000/admin-api  
-- Admin UI: http://localhost:3002/admin
+## How It Works
 
-Default superadmin credentials:
-- Username: `superadmin`
-- Password: `superadmin`
+### 1. Main Store
+The `store/` directory contains a standard Vendure installation created with `npx @vendure/create`. This serves as the base configuration that all examples inherit from.
 
-## Working with Template Stores
+### 2. Examples
+Examples are self-contained Vendure projects in the `examples/` directory. Each example:
+- Contains a complete, portable `vendure-config.ts`
+- Includes all necessary dependencies
+- Can be copied to any Vendure project
 
-### Creating a New Template Store
+### 3. Portability
+Every example's `vendure-config.ts` is **fully portable**:
 
 ```bash
-pnpm create-template <store-name>
+# Copy any example config to your project
+cp examples/my-feature/src/vendure-config.ts my-vendure-project/src/
+
+# Copy custom plugins too (if any)
+cp -r examples/my-feature/src/plugins my-vendure-project/src/
 ```
 
-This command will:
-- Create a new directory in `templates/<store-name>`
-- Set up package.json with workspace linking to the main store
-- Generate basic TypeScript configuration
-- Create a starter `src/index.ts` file
-- Generate a README for the template
+## Commands
 
-### Running Template Stores
+| Command | Description |
+|---------|-------------|
+| `pnpm create-example <name>` | Create a new example |
+| `pnpm list:examples` | List all examples |
+| `pnpm --filter vendure-example-<name> dev` | Run example in development |
+| `pnpm --filter vendure-example-<name> build` | Build example |
 
-After creating a template store:
+## Example Structure
 
-```bash
-# Development mode
-pnpm --filter vendure-template-<store-name> dev
+When you create an example, you get:
 
-# Build
-pnpm --filter vendure-template-<store-name> build
+```
+examples/my-feature/
+├── src/
+│   ├── vendure-config.ts    # ← Main config (copy this to your project)
+│   ├── plugins/             # ← Custom plugins (if any)
+│   ├── index.ts            # Server entry point
+│   └── index-worker.ts     # Worker entry point
+├── package.json            # Complete dependencies
+└── README.md              # Usage instructions
 ```
 
-### Listing Template Stores
+## Development Workflow
 
-```bash
-pnpm list:templates
-```
+1. **Create**: `pnpm create-example payment-gateway`
+2. **Develop**: Edit `examples/payment-gateway/src/vendure-config.ts`
+3. **Test**: Build and run the example
+4. **Share**: Copy the config to any Vendure project
 
-## Workspace Features
+## Key Features
 
-- **Shared Dependencies**: Common dependencies are hoisted to the workspace root
-- **Workspace Linking**: Template stores automatically link to the main store via `workspace:*`
-- **TypeScript Support**: Shared TypeScript configuration with project references
-- **Independent Scripts**: Each package can be run independently
+- ✅ **Fully Portable** - Configs work in any Vendure project
+- ✅ **Self-Contained** - Each example includes all dependencies
+- ✅ **Standard Structure** - Uses official Vendure patterns
+- ✅ **TypeScript Ready** - Full type safety and IntelliSense
+- ✅ **No Workspace Dependencies** - Examples are truly independent
 
-## Development
+## Examples Use Cases
 
-### Project Structure
+- Payment gateway integrations
+- Custom field configurations  
+- Plugin demonstrations
+- Advanced search setups
+- Multi-tenant configurations
+- Custom authentication flows
 
-Each template store contains:
-- **Complete Vendure setup** - All dependencies included for standalone use  
-- **Portable `vendure-config.ts`** - Can be copied to any Vendure project
-- **Custom plugins** - Drop-in compatible with any Vendure installation
-- **Independent operation** - Templates run with separate databases and ports
+## Requirements
 
-### Portability
+- Node.js 16+
+- PNPM 7+
 
-**The `vendure-config.ts` file in each template is fully portable:**
-1. Copy `src/vendure-config.ts` from any template
-2. Copy any custom plugins from `src/plugins/` 
-3. Paste into any Vendure project created with `npx @vendure/create`
-4. Update dependencies in `package.json` if needed
+---
 
-**Templates are completely self-contained** - no workspace dependencies required!
-
-### Adding Dependencies
-
-```bash
-# Add to workspace root
-pnpm add -w <package-name>
-
-# Add to specific store
-pnpm add --filter store <package-name>
-
-# Add to specific template
-pnpm add --filter vendure-template-<name> <package-name>
-```
-
-### Cleaning
-
-```bash
-# Clean all packages
-pnpm clean
-
-# Clean specific package
-pnpm --filter store clean
-```
-
-## Available Scripts
-
-| Script | Description |
-|--------|-------------|
-| `pnpm create-template <name>` | Create a new template store |
-| `pnpm dev:store` | Run main store in development |
-| `pnpm build:store` | Build main store |
-| `pnpm install:all` | Install dependencies for all packages |
-| `pnpm clean` | Clean all build outputs |
-| `pnpm list:templates` | List all template stores |
-
-## Contributing
-
-When adding new templates:
-1. Use the `create-template` script to ensure consistent structure
-2. Add meaningful documentation to the template's README
-3. Include specific use cases or features the template demonstrates
-4. Test that the template works with the main store
-
-## License
-
-MIT
+**Need help?** Each generated example includes its own README with specific usage instructions.

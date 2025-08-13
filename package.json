@@ -1,19 +1,19 @@
 {
-  "name": "vendure-templates-workspace",
+  "name": "vendure-examples-workspace",
   "version": "1.0.0",
-  "description": "Vendure templates monorepo workspace",
+  "description": "Vendure examples monorepo workspace",
   "private": true,
   "scripts": {
-    "create-template": "node scripts/create-template.js",
+    "create-example": "node scripts/create-example.js",
     "dev:store": "pnpm --filter store dev",
     "build:store": "pnpm --filter store build",
-    "dev:template": "pnpm --filter vendure-template-$1 dev",
-    "build:template": "pnpm --filter vendure-template-$1 build",
+    "dev:example": "pnpm --filter vendure-example-$1 dev",
+    "build:example": "pnpm --filter vendure-example-$1 build",
     "install:all": "pnpm install",
     "clean": "pnpm -r clean",
-    "list:templates": "ls -la templates/"
+    "list:examples": "ls -la examples/"
   },
-  "keywords": ["vendure", "ecommerce", "templates", "monorepo"],
+  "keywords": ["vendure", "ecommerce", "examples", "monorepo"],
   "author": "",
   "license": "MIT",
   "devDependencies": {
