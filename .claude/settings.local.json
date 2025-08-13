@@ -3,7 +3,10 @@
     "allow": [
       "Bash(mkdir:*)",
       "Bash(chmod:*)",
-      "Bash(node:*)"
+      "Bash(node:*)",
+      "Bash(pnpm build:*)",
+      "Bash(pnpm --filter store build)",
+      "Bash(pnpm --filter vendure-template-test-modern build)"
     ],
     "deny": [],
     "ask": []

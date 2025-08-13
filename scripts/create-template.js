@@ -38,10 +38,13 @@ const packageJson = {
   description: `Vendure template store: ${storeName}`,
   main: 'dist/index.js',
   scripts: {
-    dev: 'ts-node src/index.ts',
+    'dev:server': 'ts-node ./src/index.ts',
+    'dev:worker': 'ts-node ./src/index-worker.ts',
+    dev: 'concurrently npm:dev:*',
     build: 'tsc',
-    start: 'node dist/index.js',
-    clean: 'rimraf dist'
+    'start:server': 'node ./dist/index.js',
+    'start:worker': 'node ./dist/index-worker.js',
+    start: 'concurrently npm:start:*'
   },
   dependencies: {
     'vendure-main-store': 'workspace:*'
@@ -75,30 +78,73 @@ fs.writeFileSync(
 );
 
 // Create basic index.ts
-const indexTs = `import { bootstrap } from 'vendure-main-store';
+const indexTs = `import { bootstrap, runMigrations, config, VendureConfig, AdminUiPlugin } from 'vendure-main-store';
+import path from 'path';
 
-async function runTemplate() {
-  console.log('Starting ${storeName} template store...');
-  
-  // You can customize the Vendure configuration here
-  // or import specific configurations from the main store
-  
-  const app = await bootstrap({
-    // Add your custom configuration here
-    // This template inherits from the main store
+// Customize the config for this template
+const templateConfig: VendureConfig = {
+  ...config,
+  apiOptions: {
+    ...config.apiOptions,
+    port: 3001, // Different port from main store
+  },
+  dbConnectionOptions: {
+    type: 'better-sqlite3',
+    synchronize: false,
+    migrations: [path.join(__dirname, './migrations/*.+(js|ts)')],
+    logging: false,
+    database: path.join(__dirname, '../${storeName}.sqlite'), // Separate database
+  },
+  plugins: [
+    ...(config.plugins || []).map((plugin: any) => {
+      // Update AdminUI port to avoid conflicts
+      if (plugin.constructor.name === 'AdminUiPlugin') {
+        return AdminUiPlugin.init({
+          route: 'admin',
+          port: 3003, // Different admin port
+          adminUiConfig: {
+            apiPort: 3001,
+          },
+        });
+      }
+      return plugin;
+    }),
+  ],
+};
+
+runMigrations(templateConfig)
+  .then(() => bootstrap(templateConfig))
+  .catch((err: any) => {
+    console.log(err);
   });
-  
-  console.log('${storeName} template store is running on port 3000');
-}
-
-if (require.main === module) {
-  runTemplate().catch(console.error);
-}
-
-export { runTemplate };
 `;
 
 fs.writeFileSync(path.join(templateDir, 'src', 'index.ts'), indexTs);
+
+// Create index-worker.ts
+const workerTs = `import { bootstrapWorker, config, VendureConfig } from 'vendure-main-store';
+import path from 'path';
+
+// Use the same customized config as the server
+const templateConfig: VendureConfig = {
+  ...config,
+  dbConnectionOptions: {
+    type: 'better-sqlite3',
+    synchronize: false,
+    migrations: [path.join(__dirname, './migrations/*.+(js|ts)')],
+    logging: false,
+    database: path.join(__dirname, '../${storeName}.sqlite'),
+  },
+};
+
+bootstrapWorker(templateConfig)
+  .then((worker: any) => worker.startJobQueue())
+  .catch((err: any) => {
+    console.log(err);
+  });
+`;
+
+fs.writeFileSync(path.join(templateDir, 'src', 'index-worker.ts'), workerTs);
 
 // Create README.md
 const readmeMd = `# ${storeName} Template Store
@@ -111,11 +157,17 @@ This is a template Vendure store demonstrating specific features or configuratio
 # Install dependencies
 pnpm install
 
-# Run in development mode
-pnpm dev:template ${storeName}
+# Run in development mode (server + worker)
+pnpm --filter vendure-template-${storeName} dev
+
+# Run only server
+pnpm --filter vendure-template-${storeName} dev:server
+
+# Run only worker  
+pnpm --filter vendure-template-${storeName} dev:worker
 
 # Build the template
-pnpm build:template ${storeName}
+pnpm --filter vendure-template-${storeName} build
 \`\`\`
 
 ## Description
