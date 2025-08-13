@@ -90,11 +90,21 @@ pnpm list:templates
 
 ### Project Structure
 
-Each template store inherits from the main store and can:
-- Import the `bootstrap` function from `vendure-main-store`
-- Override configuration options
-- Add custom plugins and configurations
-- Extend the base Vendure setup
+Each template store contains:
+- **Complete Vendure setup** - All dependencies included for standalone use  
+- **Portable `vendure-config.ts`** - Can be copied to any Vendure project
+- **Custom plugins** - Drop-in compatible with any Vendure installation
+- **Independent operation** - Templates run with separate databases and ports
+
+### Portability
+
+**The `vendure-config.ts` file in each template is fully portable:**
+1. Copy `src/vendure-config.ts` from any template
+2. Copy any custom plugins from `src/plugins/` 
+3. Paste into any Vendure project created with `npx @vendure/create`
+4. Update dependencies in `package.json` if needed
+
+**Templates are completely self-contained** - no workspace dependencies required!
 
 ### Adding Dependencies
 

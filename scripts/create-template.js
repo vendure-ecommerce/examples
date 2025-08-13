@@ -47,7 +47,13 @@ const packageJson = {
     start: 'concurrently npm:start:*'
   },
   dependencies: {
-    'vendure-main-store': 'workspace:*'
+    '@vendure/admin-ui-plugin': '3.4.0',
+    '@vendure/asset-server-plugin': '3.4.0',
+    '@vendure/core': '3.4.0',
+    '@vendure/email-plugin': '3.4.0',
+    '@vendure/graphiql-plugin': '3.4.0',
+    'better-sqlite3': '11.10.0',
+    'dotenv': '17.2.1'
   },
   devDependencies: {},
   keywords: ['vendure', 'ecommerce', 'template', storeName],
@@ -78,7 +84,10 @@ fs.writeFileSync(
 );
 
 // Create basic index.ts
-const indexTs = `import { bootstrap, runMigrations, config, VendureConfig, AdminUiPlugin } from 'vendure-main-store';
+const indexTs = `import { bootstrap, runMigrations } from '@vendure/core';
+import { config } from './vendure-config';
+import { VendureConfig } from '@vendure/core';
+import { AdminUiPlugin } from '@vendure/admin-ui-plugin';
 import path from 'path';
 
 // Customize the config for this template
@@ -122,7 +131,9 @@ runMigrations(templateConfig)
 fs.writeFileSync(path.join(templateDir, 'src', 'index.ts'), indexTs);
 
 // Create index-worker.ts
-const workerTs = `import { bootstrapWorker, config, VendureConfig } from 'vendure-main-store';
+const workerTs = `import { bootstrapWorker } from '@vendure/core';
+import { config } from './vendure-config';
+import { VendureConfig } from '@vendure/core';
 import path from 'path';
 
 // Use the same customized config as the server
@@ -145,6 +156,30 @@ bootstrapWorker(templateConfig)
 `;
 
 fs.writeFileSync(path.join(templateDir, 'src', 'index-worker.ts'), workerTs);
+
+// Copy and modify vendure-config.ts from main store
+const configPath = path.join(__dirname, '..', 'store', 'src', 'vendure-config.ts');
+let configContent = fs.readFileSync(configPath, 'utf8');
+
+// Add fallback values for template use
+configContent = configContent.replace(
+  'process.env.SUPERADMIN_USERNAME',
+  'process.env.SUPERADMIN_USERNAME || "superadmin"'
+);
+configContent = configContent.replace(
+  'process.env.SUPERADMIN_PASSWORD',
+  'process.env.SUPERADMIN_PASSWORD || "superadmin"'
+);
+configContent = configContent.replace(
+  'process.env.COOKIE_SECRET',
+  'process.env.COOKIE_SECRET || "cookie-secret-' + storeName + '"'
+);
+configContent = configContent.replace(
+  '+process.env.PORT || 3000',
+  '+(process.env.PORT || 3000)'
+);
+
+fs.writeFileSync(path.join(templateDir, 'src', 'vendure-config.ts'), configContent);
 
 // Create README.md
 const readmeMd = `# ${storeName} Template Store

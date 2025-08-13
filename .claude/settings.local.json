@@ -6,7 +6,8 @@
       "Bash(node:*)",
       "Bash(pnpm build:*)",
       "Bash(pnpm --filter store build)",
-      "Bash(pnpm --filter vendure-template-test-modern build)"
+      "Bash(pnpm --filter vendure-template-test-modern build)",
+      "Bash(rm:*)"
     ],
     "deny": [],
     "ask": []
