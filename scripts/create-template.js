@@ -46,12 +46,7 @@ const packageJson = {
   dependencies: {
     'vendure-main-store': 'workspace:*'
   },
-  devDependencies: {
-    typescript: '^5.0.0',
-    '@types/node': '^20.0.0',
-    'ts-node': '^10.0.0',
-    'rimraf': '^5.0.0'
-  },
+  devDependencies: {},
   keywords: ['vendure', 'ecommerce', 'template', storeName],
   author: '',
   license: 'MIT'

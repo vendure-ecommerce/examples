@@ -55,6 +55,11 @@ export const config: VendureConfig = {
   logger: new DefaultLogger({ level: LogLevel.Debug }),
 };
 
+// Re-export commonly used Vendure types and utilities for templates
+export { VendureConfig, DefaultLogger, LogLevel } from '@vendure/core';
+export { EmailPlugin, defaultEmailHandlers } from '@vendure/email-plugin';
+export { AdminUiPlugin } from '@vendure/admin-ui-plugin';
+
 export async function bootstrap(customConfig?: Partial<VendureConfig>) {
   const { bootstrap } = await import('@vendure/core');
   
