@@ -5,10 +5,8 @@
   "private": true,
   "scripts": {
     "create-example": "node scripts/create-example.js",
-    "dev:store": "pnpm --filter store dev",
-    "build:store": "pnpm --filter store build",
-    "dev:example": "pnpm --filter vendure-example-$1 dev",
-    "build:example": "pnpm --filter vendure-example-$1 build",
+    "dev:store": "pnpm --filter vendure-main-store dev",
+    "build:store": "pnpm --filter vendure-main-store build",
     "install:all": "pnpm install",
     "clean": "pnpm -r clean",
     "list:examples": "ls -la examples/"

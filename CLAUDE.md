@@ -24,6 +24,14 @@ pnpm list:examples
 
 # Install dependencies (run after creating examples)
 pnpm install
+
+# Run main store  
+pnpm dev:store
+pnpm build:store
+
+# Or directly:
+pnpm --filter vendure-main-store dev
+pnpm --filter vendure-main-store build
 ```
 
 ## Project Structure
@@ -82,8 +90,8 @@ npm run lint       # (if available)
 ```
 
 ## Port Configuration
-- Main Store: Server 3000, Admin 3002
-- Examples: Server 3001, Admin 3003
+- Main Store: Server 3000, Admin 3002 (standard Vendure ports)
+- Examples: Server 3000, Admin 3002 (standard Vendure ports)
 - Database: Separate SQLite file per example
 
 ## Important Notes

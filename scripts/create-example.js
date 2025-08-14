@@ -17,6 +17,7 @@ if (!/^[a-zA-Z0-9-_]+$/.test(storeName)) {
 }
 
 const exampleDir = path.join(__dirname, '..', 'examples', storeName);
+const storeDir = path.join(__dirname, '..', 'store');
 
 if (fs.existsSync(exampleDir)) {
   console.error(`Example store "${storeName}" already exists`);
@@ -25,71 +26,63 @@ if (fs.existsSync(exampleDir)) {
 
 console.log(`Creating example store: ${storeName}`);
 
-fs.mkdirSync(exampleDir, { recursive: true });
-fs.mkdirSync(path.join(exampleDir, 'src'), { recursive: true });
+function copyRecursiveSync(src, dest, excludes = []) {
+  const stats = fs.statSync(src);
+  
+  if (stats.isDirectory()) {
+    if (!fs.existsSync(dest)) {
+      fs.mkdirSync(dest, { recursive: true });
+    }
+    
+    const files = fs.readdirSync(src);
+    files.forEach(file => {
+      if (!excludes.includes(file)) {
+        copyRecursiveSync(
+          path.join(src, file), 
+          path.join(dest, file), 
+          excludes
+        );
+      }
+    });
+  } else {
+    fs.copyFileSync(src, dest);
+  }
+}
 
-const packageJson = {
-  name: `vendure-example-${storeName}`,
-  version: '1.0.0',
-  description: `Vendure example store: ${storeName}`,
-  main: 'dist/index.js',
-  scripts: {
-    'dev:server': 'ts-node ./src/index.ts',
-    'dev:worker': 'ts-node ./src/index-worker.ts',
-    dev: 'concurrently npm:dev:*',
-    build: 'tsc',
-    'start:server': 'node ./dist/index.js',
-    'start:worker': 'node ./dist/index-worker.js',
-    start: 'concurrently npm:start:*'
-  },
-  dependencies: {
-    '@vendure/admin-ui-plugin': '3.4.0',
-    '@vendure/asset-server-plugin': '3.4.0',
-    '@vendure/core': '3.4.0',
-    '@vendure/email-plugin': '3.4.0',
-    '@vendure/graphiql-plugin': '3.4.0',
-    'better-sqlite3': '11.10.0',
-    'dotenv': '17.2.1'
-  },
-  devDependencies: {},
-  keywords: ['vendure', 'ecommerce', 'example', storeName],
-  author: '',
-  license: 'MIT'
+copyRecursiveSync(storeDir, exampleDir, [
+  'node_modules', 
+  'dist', 
+  'vendure.sqlite', 
+  'package-lock.json'
+]);
+
+const packageJsonPath = path.join(exampleDir, 'package.json');
+const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf8'));
+
+packageJson.name = `vendure-example-${storeName}`;
+packageJson.description = `Vendure example store: ${storeName}`;
+packageJson.keywords = [...(packageJson.keywords || []), 'example', storeName];
+
+// Add bcrypt as direct dependency to avoid native binding issues
+packageJson.dependencies = {
+  ...packageJson.dependencies,
+  'bcrypt': '5.1.1'
 };
 
-fs.writeFileSync(
-  path.join(exampleDir, 'package.json'),
-  JSON.stringify(packageJson, null, 2)
-);
+fs.writeFileSync(packageJsonPath, JSON.stringify(packageJson, null, 2));
 
-const tsConfig = {
-  extends: '../../tsconfig.base.json',
-  compilerOptions: {
-    outDir: './dist',
-    rootDir: './src',
-    composite: true
-  },
-  include: ['src/**/*'],
-  exclude: ['node_modules', 'dist']
-};
+const indexTsPath = path.join(exampleDir, 'src', 'index.ts');
+let indexTs = fs.readFileSync(indexTsPath, 'utf8');
 
-fs.writeFileSync(
-  path.join(exampleDir, 'tsconfig.json'),
-  JSON.stringify(tsConfig, null, 2)
-);
-
-const indexTs = `import { bootstrap, runMigrations } from '@vendure/core';
-import { config } from './vendure-config';
+indexTs = indexTs.replace(
+  'import { config } from \'./vendure-config\';',
+  `import { config } from './vendure-config';
 import { VendureConfig } from '@vendure/core';
 import { AdminUiPlugin } from '@vendure/admin-ui-plugin';
 import path from 'path';
 
 const exampleConfig: VendureConfig = {
   ...config,
-  apiOptions: {
-    ...config.apiOptions,
-    port: 3001,
-  },
   dbConnectionOptions: {
     type: 'better-sqlite3',
     synchronize: false,
@@ -102,28 +95,36 @@ const exampleConfig: VendureConfig = {
       if (plugin.constructor.name === 'AdminUiPlugin') {
         return AdminUiPlugin.init({
           route: 'admin',
-          port: 3003,
+          port: 3002,
           adminUiConfig: {
-            apiPort: 3001,
+            apiPort: 3000,
           },
         });
       }
       return plugin;
     }),
   ],
-};
+};`
+);
 
-runMigrations(exampleConfig)
-  .then(() => bootstrap(exampleConfig))
-  .catch((err: any) => {
-    console.log(err);
-  });
-`;
+indexTs = indexTs.replace(
+  'runMigrations(config)',
+  'runMigrations(exampleConfig)'
+);
 
-fs.writeFileSync(path.join(exampleDir, 'src', 'index.ts'), indexTs);
+indexTs = indexTs.replace(
+  'bootstrap(config)',
+  'bootstrap(exampleConfig)'
+);
 
-const workerTs = `import { bootstrapWorker } from '@vendure/core';
-import { config } from './vendure-config';
+fs.writeFileSync(indexTsPath, indexTs);
+
+const workerTsPath = path.join(exampleDir, 'src', 'index-worker.ts');
+let workerTs = fs.readFileSync(workerTsPath, 'utf8');
+
+workerTs = workerTs.replace(
+  'import { config } from \'./vendure-config\';',
+  `import { config } from './vendure-config';
 import { VendureConfig } from '@vendure/core';
 import path from 'path';
 
@@ -131,23 +132,21 @@ const exampleConfig: VendureConfig = {
   ...config,
   dbConnectionOptions: {
     type: 'better-sqlite3',
-    synchronize: false,
-    migrations: [path.join(__dirname, './migrations/*.+(js|ts)')],
+    synchronize: true,
     logging: false,
     database: path.join(__dirname, '../${storeName}.sqlite'),
   },
-};
+};`
+);
 
-bootstrapWorker(exampleConfig)
-  .then((worker: any) => worker.startJobQueue())
-  .catch((err: any) => {
-    console.log(err);
-  });
-`;
+workerTs = workerTs.replace(
+  'bootstrapWorker(config)',
+  'bootstrapWorker(exampleConfig)'
+);
 
-fs.writeFileSync(path.join(exampleDir, 'src', 'index-worker.ts'), workerTs);
+fs.writeFileSync(workerTsPath, workerTs);
 
-const configPath = path.join(__dirname, '..', 'store', 'src', 'vendure-config.ts');
+const configPath = path.join(exampleDir, 'src', 'vendure-config.ts');
 let configContent = fs.readFileSync(configPath, 'utf8');
 
 configContent = configContent.replace(
@@ -167,7 +166,7 @@ configContent = configContent.replace(
   '+(process.env.PORT || 3000)'
 );
 
-fs.writeFileSync(path.join(exampleDir, 'src', 'vendure-config.ts'), configContent);
+fs.writeFileSync(configPath, configContent);
 
 const readmeMd = `# ${storeName} Example Store
 

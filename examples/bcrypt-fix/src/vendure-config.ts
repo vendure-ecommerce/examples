@@ -4,6 +4,7 @@ import {
   DefaultSchedulerPlugin,
   DefaultSearchPlugin,
   VendureConfig,
+  PasswordHashingStrategy,
 } from "@vendure/core";
 import {
   defaultEmailHandlers,
@@ -15,9 +16,20 @@ import { AdminUiPlugin } from "@vendure/admin-ui-plugin";
 import { GraphiqlPlugin } from "@vendure/graphiql-plugin";
 import "dotenv/config";
 import path from "path";
+import { hash as bcryptHash, verify as bcryptVerify } from "@node-rs/bcrypt";
+
+class NodeRsBcryptStrategy implements PasswordHashingStrategy {
+  async hash(plaintext: string): Promise<string> {
+    return bcryptHash(plaintext, 12);
+  }
+
+  async check(plaintext: string, hash: string): Promise<boolean> {
+    return bcryptVerify(plaintext, hash);
+  }
+}
 
 const IS_DEV = process.env.APP_ENV === "dev";
-const serverPort = +process.env.PORT || 3000;
+const serverPort = +(process.env.PORT || 3000);
 
 export const config: VendureConfig = {
   apiOptions: {
@@ -36,13 +48,16 @@ export const config: VendureConfig = {
       : {}),
   },
   authOptions: {
+    // Override the default bcrypt (native) strategy with @node-rs/bcrypt
+    // which ships prebuilt binaries and avoids node-gyp toolchain issues.
+    passwordHashingStrategy: new NodeRsBcryptStrategy(),
     tokenMethod: ["bearer", "cookie"],
     superadminCredentials: {
-      identifier: process.env.SUPERADMIN_USERNAME,
-      password: process.env.SUPERADMIN_PASSWORD,
+      identifier: process.env.SUPERADMIN_USERNAME || "superadmin",
+      password: process.env.SUPERADMIN_PASSWORD || "superadmin",
     },
     cookieOptions: {
-      secret: process.env.COOKIE_SECRET,
+      secret: process.env.COOKIE_SECRET || "cookie-secret-bcrypt-fix",
     },
   },
   dbConnectionOptions: {
