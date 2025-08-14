@@ -6,16 +6,16 @@ A collection of portable Vendure configurations and examples that can be copied 
 
 ```bash
 # Install dependencies
-pnpm install
+npm install
 
 # Create a new example
-pnpm create-example my-feature
+npm run create-example my-feature
 
 # Build the example
-pnpm --filter vendure-example-my-feature build
+npm run build --workspace=my-feature
 
 # Run the example (optional)
-pnpm --filter vendure-example-my-feature dev
+npm run dev:server --workspace=my-feature
 ```
 
 ## How It Works
@@ -44,10 +44,10 @@ cp -r examples/my-feature/src/plugins my-vendure-project/src/
 
 | Command | Description |
 |---------|-------------|
-| `pnpm create-example <name>` | Create a new example |
-| `pnpm list:examples` | List all examples |
-| `pnpm --filter vendure-example-<name> dev` | Run example in development |
-| `pnpm --filter vendure-example-<name> build` | Build example |
+| `npm run create-example <name>` | Create a new example |
+| `npm run list:examples` | List all examples |
+| `npm run dev:server --workspace=<name>` | Run example in development |
+| `npm run build --workspace=<name>` | Build example |
 
 ## Example Structure
 
@@ -66,7 +66,7 @@ examples/my-feature/
 
 ## Development Workflow
 
-1. **Create**: `pnpm create-example payment-gateway`
+1. **Create**: `npm run create-example payment-gateway`
 2. **Develop**: Edit `examples/payment-gateway/src/vendure-config.ts`
 3. **Test**: Build and run the example
 4. **Share**: Copy the config to any Vendure project
@@ -91,7 +91,7 @@ examples/my-feature/
 ## Requirements
 
 - Node.js 16+
-- PNPM 7+
+- npm 7+
 
 ---
 

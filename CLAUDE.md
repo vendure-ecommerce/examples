@@ -1,7 +1,7 @@
 # CLAUDE.md - Vendure Examples Workspace
 
 ## Project Overview
-This is a PNPM workspace monorepo for Vendure-based example projects. It provides a system for creating portable, self-contained Vendure configurations that can be copied to any standard Vendure project.
+This is an npm workspace monorepo for Vendure-based example projects. It provides a system for creating portable, self-contained Vendure configurations that can be copied to any standard Vendure project.
 
 ## Architecture
 - **Main Store**: `store/` - Standard Vendure installation from `npx @vendure/create`
@@ -11,27 +11,27 @@ This is a PNPM workspace monorepo for Vendure-based example projects. It provide
 ## Key Commands
 ```bash
 # Create new example
-pnpm create-example <name>
+npm run create-example <name>
 
 # Run example in development
-pnpm --filter vendure-example-<name> dev
+npm run dev:server --workspace=<name>
 
 # Build example
-pnpm --filter vendure-example-<name> build
+npm run build --workspace=<name>
 
 # List examples
-pnpm list:examples
+npm run list:examples
 
 # Install dependencies (run after creating examples)
-pnpm install
+npm install
 
 # Run main store  
-pnpm dev:store
-pnpm build:store
+npm run dev:store
+npm run build:store
 
 # Or directly:
-pnpm --filter vendure-main-store dev
-pnpm --filter vendure-main-store build
+npm run dev:server --workspace=vendure-main-store
+npm run build --workspace=vendure-main-store
 ```
 
 ## Project Structure
@@ -52,15 +52,15 @@ vendure-examples/
 │       └── README.md             # Usage instructions
 ├── scripts/
 │   └── create-example.js     # Template generation script
-├── pnpm-workspace.yaml       # PNPM workspace configuration
+├── package.json              # npm workspace configuration
 └── tsconfig.base.json        # Shared TypeScript config
 ```
 
 ## Development Workflow
-1. Create example: `pnpm create-example my-feature`
+1. Create example: `npm run create-example my-feature`
 2. Edit configuration: `examples/my-feature/src/vendure-config.ts`
-3. Test: `pnpm --filter vendure-example-my-feature build`
-4. Run: `pnpm --filter vendure-example-my-feature dev`
+3. Test: `npm run build --workspace=my-feature`
+4. Run: `npm run dev:server --workspace=my-feature`
 
 ## Portability Features
 - Examples use separate databases (`<name>.sqlite`)
@@ -77,10 +77,10 @@ vendure-examples/
 ## Testing Commands
 ```bash
 # Build main store first (dependency for examples)
-pnpm --filter store build
+npm run build --workspace=store
 
 # Build specific example
-pnpm --filter vendure-example-<name> build
+npm run build --workspace=<name>
 
 # Run type checking
 npm run typecheck  # (if available)

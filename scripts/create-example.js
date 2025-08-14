@@ -7,7 +7,7 @@ const { execSync } = require('child_process');
 const storeName = process.argv[2];
 
 if (!storeName) {
-  console.error('Usage: pnpm create-example <store-name>');
+  console.error('Usage: npm run create-example <store-name>');
   process.exit(1);
 }
 
@@ -59,7 +59,7 @@ copyRecursiveSync(storeDir, exampleDir, [
 const packageJsonPath = path.join(exampleDir, 'package.json');
 const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf8'));
 
-packageJson.name = `vendure-example-${storeName}`;
+packageJson.name = storeName;
 packageJson.description = `Vendure example store: ${storeName}`;
 packageJson.keywords = [...(packageJson.keywords || []), 'example', storeName];
 
@@ -176,19 +176,19 @@ This is an example Vendure store demonstrating specific features or configuratio
 
 \`\`\`bash
 # Install dependencies
-pnpm install
+npm install
 
 # Run in development mode (server + worker)
-pnpm --filter vendure-example-${storeName} dev
+npm run dev --workspace=${storeName}
 
 # Run only server
-pnpm --filter vendure-example-${storeName} dev:server
+npm run dev:server --workspace=${storeName}
 
 # Run only worker  
-pnpm --filter vendure-example-${storeName} dev:worker
+npm run dev:worker --workspace=${storeName}
 
 # Build the example
-pnpm --filter vendure-example-${storeName} build
+npm run build --workspace=${storeName}
 \`\`\`
 
 ## Description
@@ -205,16 +205,16 @@ fs.writeFileSync(path.join(exampleDir, 'README.md'), readmeMd);
 console.log(`✅ Example store "${storeName}" created successfully!`);
 console.log(`📁 Location: examples/${storeName}`);
 console.log(`🚀 To get started:`);
-console.log(`   pnpm install`);
-console.log(`   pnpm dev:example ${storeName}`);
+console.log(`   npm install`);
+console.log(`   npm run dev:server --workspace=${storeName}`);
 
 try {
   console.log('Installing dependencies...');
-  execSync('pnpm install', { 
+  execSync('npm install', { 
     cwd: path.join(__dirname, '..'),
     stdio: 'inherit' 
   });
   console.log('✅ Dependencies installed successfully!');
 } catch (error) {
-  console.error('⚠️  Failed to install dependencies automatically. Run "pnpm install" manually.');
+  console.error('⚠️  Failed to install dependencies automatically. Run "npm install" manually.');
 }
