@@ -1,86 +1,192 @@
 # Shop GitHub Auth Example
 
-This example demonstrates how to implement GitHub OAuth authentication in a Vendure shop using the `ShopGithubAuthPlugin`.
+A complete GitHub OAuth authentication implementation for Vendure, demonstrating how customers can sign in using their GitHub accounts. This example includes both a custom Vendure plugin for backend authentication and a Next.js frontend storefront.
 
-## Plugin Overview
+## What's Included
 
-The `ShopGithubAuthPlugin` provides GitHub OAuth authentication for your Vendure shop, allowing customers to sign in using their GitHub accounts.
+### Backend (Vendure Plugin)
+- **Custom GitHub Authentication Strategy** - Handles OAuth 2.0 flow with GitHub
+- **Plugin Architecture** - Production-ready plugin following Vendure patterns
+- **Automatic User Management** - Creates and manages customer accounts seamlessly
+- **GraphQL Integration** - Extends shop API with GitHub authentication input
 
-## Features
+### Frontend (Next.js Storefront)
+- **OAuth Sign-in Component** - "Continue with GitHub" button with proper flow handling
+- **Callback Handler** - Processes GitHub OAuth redirects and exchanges tokens
+- **Session Management** - Integrates with Vendure's authentication system
+- **Complete UI** - Full e-commerce storefront with GitHub auth integration
 
-- GitHub OAuth authentication for shop customers
-- Automatic user creation and management
-- Customizable user creation and login callbacks
-- Secure token handling
+### Documentation
+- **Implementation Guide** (`guide.md`) - Step-by-step tutorial for recreating this in any Vendure store
+- **Conceptual Overview** (`guide-tutorial.md`) - How GitHub auth fits into Vendure's architecture
 
-## Configuration
+## Prerequisites
 
-### 1. GitHub OAuth App Setup
+- Node.js 18+
+- GitHub account (for creating OAuth app)
+- Basic understanding of Vendure and OAuth 2.0
 
-First, create a GitHub OAuth App:
+## Quick Start
 
-1. Go to GitHub Settings > Developer settings > OAuth Apps
+### 1. Clone Repository
+
+```bash
+git clone https://github.com/vendure-ecommerce/vendure-examples.git
+cd vendure-examples/examples/shop-github-auth
+```
+
+### 2. Set Up GitHub OAuth App
+
+1. Go to [GitHub Developer Settings](https://github.com/settings/developers)
 2. Click "New OAuth App"
-3. Fill in the application details:
-   - **Application name**: Your app name
-   - **Homepage URL**: Your site URL (e.g., `http://localhost:3000`)
-   - **Authorization callback URL**: Your auth callback URL (e.g., `http://localhost:3000/auth/github/callback`)
-4. Save the Client ID and Client Secret
+3. Configure:
+   - **Application name**: `Vendure GitHub Auth Demo`
+   - **Homepage URL**: `http://localhost:3001`
+   - **Authorization callback URL**: `http://localhost:3001/sign-in`
+4. Save your **Client ID** and **Client Secret**
 
-### 2. Environment Variables
+### 3. Configure Environment Variables
 
-Add the following environment variables to your `.env` file:
+Create environment files with your GitHub OAuth credentials:
 
+**Backend configuration** (`.env` in root):
 ```bash
 GITHUB_CLIENT_ID=your_github_client_id
 GITHUB_CLIENT_SECRET=your_github_client_secret
 ```
 
-### 3. Plugin Configuration
-
-The plugin is already configured in `src/vendure-config.ts`:
-
-```typescript
-import { ShopGithubAuthPlugin } from "./plugins/shop-github-auth/shop-github-auth.plugin";
-
-// In your plugins array:
-ShopGithubAuthPlugin.init({
-  clientId: process.env.GITHUB_CLIENT_ID,
-  clientSecret: process.env.GITHUB_CLIENT_SECRET,
-  // Optional callbacks:
-  onUserCreated: (ctx, injector, user) => {
-    // Custom logic when a new user is created
-    console.log('New user created:', user.identifier);
-  },
-  onUserFound: (ctx, injector, user) => {
-    // Custom logic when an existing user logs in
-    console.log('User logged in:', user.identifier);
-  },
-})
+**Frontend configuration** (`vercel-commerce/.env.local`):
+```bash
+NEXT_PUBLIC_GITHUB_CLIENT_ID=your_github_client_id
+VENDURE_API_ENDPOINT=http://localhost:3000/shop-api
 ```
 
-## Getting Started
+### 4. Install Dependencies
 
 ```bash
-# Install dependencies
+# Install workspace dependencies
 npm install
 
-# Run in development mode (server + worker)
-npm run dev --workspace=shop-github-auth
-
-# Run only server
-npm run dev:server --workspace=shop-github-auth
-
-# Run only worker  
-npm run dev:worker --workspace=shop-github-auth
-
-# Build the example
-npm run build --workspace=shop-github-auth
+# Install frontend dependencies
+cd vercel-commerce
+npm install
+cd ..
 ```
 
-## Usage
+### 5. Start the Servers
 
-### GraphQL Mutation
+**Terminal 1 - Backend (Vendure):**
+```bash
+npm run dev:server --workspace=shop-github-auth
+```
+
+**Terminal 2 - Frontend (Next.js):**
+```bash
+cd vercel-commerce
+npm run dev
+```
+
+## Access the Application
+
+- **Storefront**: http://localhost:3001
+- **Vendure Admin**: http://localhost:3002/admin
+- **GraphQL Playground**: http://localhost:3000/shop-api
+
+## Testing GitHub Authentication
+
+### 1. Visit the Storefront
+Navigate to http://localhost:3001 and click "Account" in the navigation.
+
+*[PLACEHOLDER SCREENSHOT: Storefront homepage with navigation showing Account link]*
+
+### 2. GitHub Sign-In
+Click "Continue with GitHub" on the sign-in page.
+
+*[PLACEHOLDER SCREENSHOT: Sign-in page showing "Continue with GitHub" button alongside traditional login form]*
+
+### 3. GitHub Authorization
+You'll be redirected to GitHub to authorize the application.
+
+*[PLACEHOLDER SCREENSHOT: GitHub OAuth authorization page asking for permission]*
+
+### 4. Successful Authentication
+After authorization, you'll be redirected back and logged in automatically.
+
+*[PLACEHOLDER SCREENSHOT: Account dashboard showing user logged in with GitHub username]*
+
+### 5. Verify in Admin UI
+Check the Vendure Admin UI to see the created customer account.
+
+*[PLACEHOLDER SCREENSHOT: Vendure Admin showing customer with GitHub-generated email address]*
+
+## How It Works
+
+```
+┌─────────────┐    ┌─────────────┐    ┌─────────────┐
+│  Frontend   │    │   Vendure   │    │   GitHub    │
+│ (Next.js)   │    │  Backend    │    │    API      │
+└─────────────┘    └─────────────┘    └─────────────┘
+        │                   │                   │
+        │  1. Redirect to   │                   │
+        │     GitHub        │                   │
+        ├──────────────────────────────────────▶│
+        │                   │                   │
+        │  2. Authorization │                   │
+        │     Code          │                   │
+        ◄──────────────────────────────────────┤
+        │                   │                   │
+        │  3. Send Code to  │                   │
+        │     Vendure       │                   │
+        ├──────────────────▶│                   │
+        │                   │  4. Exchange      │
+        │                   │     for Token     │
+        │                   ├──────────────────▶│
+        │                   │  5. User Data     │
+        │                   ◄──────────────────┤
+        │  6. Session       │                   │
+        │     Cookie        │                   │
+        ◄──────────────────┤                   │
+```
+
+## Project Structure
+
+```
+shop-github-auth/
+├── src/
+│   ├── plugins/shop-github-auth/    # Custom Vendure plugin
+│   │   ├── constants.ts             # Plugin constants
+│   │   ├── types.ts                 # TypeScript interfaces
+│   │   ├── github-auth-strategy.ts  # OAuth strategy implementation
+│   │   └── shop-github-auth.plugin.ts # Main plugin class
+│   ├── vendure-config.ts            # Vendure configuration
+│   ├── index.ts                     # Server entry point
+│   └── index-worker.ts              # Worker process entry
+├── vercel-commerce/                 # Next.js frontend
+│   ├── components/account/          # Authentication components
+│   ├── lib/vendure/                 # Vendure API integration
+│   └── app/                         # Next.js app router pages
+├── guide.md                         # Implementation tutorial
+├── guide-tutorial.md               # Conceptual overview
+└── README.md                       # This file
+```
+
+## Key Features Demonstrated
+
+### Backend Plugin
+- **Custom Authentication Strategy** following Vendure's plugin patterns
+- **OAuth 2.0 Implementation** with proper security practices
+- **External Authentication Service** integration for user management
+- **Environment-based Configuration** for different deployment environments
+
+### Frontend Integration
+- **Framework-agnostic OAuth Flow** adaptable to any frontend framework
+- **Proper Error Handling** for OAuth failures and edge cases
+- **Session Management** using Vendure's authentication system
+- **GraphQL Integration** with type-safe mutations and queries
+
+## Advanced Testing
+
+### GraphQL Mutation Testing
 
 Use the `authenticate` mutation with GitHub auth data:
 
@@ -100,162 +206,49 @@ mutation AuthenticateGitHub($input: AuthenticationInput!) {
 }
 ```
 
-Variables:
-```json
-{
-  "input": {
-    "github": {
-      "code": "authorization_code_from_github"
-    }
-  }
-}
-```
+### Schema Verification
 
-### Frontend Integration
-
-In your frontend application, redirect users to GitHub's OAuth URL:
-
-```javascript
-const githubAuthUrl = `https://github.com/login/oauth/authorize?client_id=${clientId}&redirect_uri=${redirectUri}&scope=user:email`;
-window.location.href = githubAuthUrl;
-```
-
-After GitHub redirects back with a code, use it in the GraphQL mutation above.
-
-## Testing with curl
-
-### 1. Verify Plugin is Loaded
-
-First, check if the GitHub authentication input is available in the schema:
+Check if GitHub authentication is available:
 
 ```bash
 curl -X POST http://localhost:3000/shop-api \
   -H "Content-Type: application/json" \
   -d '{
-    "query": "query { __type(name: \"AuthenticationInput\") { inputFields { name type { name inputFields { name type { name } } } } } }"
+    "query": "query { __type(name: \"AuthenticationInput\") { inputFields { name type { name } } } }"
   }'
 ```
 
 You should see a `github` field with `GitHubAuthInput` type in the response.
 
-### 2. Get GitHub Authorization Code
+## Production Deployment
 
-To get an authorization code for testing:
+For production use, update your GitHub OAuth app with production URLs and ensure:
 
-1. Replace `YOUR_CLIENT_ID` with your actual GitHub Client ID:
-   ```bash
-   open "https://github.com/login/oauth/authorize?client_id=YOUR_CLIENT_ID&redirect_uri=http://localhost:3000/callback&scope=user:email"
-   ```
+- HTTPS callback URLs
+- Proper environment variable management
+- Security headers and CORS configuration
+- Database migrations and scaling considerations
 
-2. Complete the GitHub OAuth flow and copy the `code` parameter from the redirect URL
+## Learn More
 
-### 3. Test Authentication
+- **Implementation Tutorial**: See `guide.md` for step-by-step recreation instructions
+- **Architecture Overview**: Read `guide-tutorial.md` for conceptual understanding
+- **Vendure Documentation**: [Authentication Strategies](https://docs.vendure.io)
+- **GitHub OAuth**: [GitHub OAuth Apps Documentation](https://docs.github.com/en/developers/apps/oauth-apps)
 
-Replace `YOUR_AUTHORIZATION_CODE` with the code from step 2:
+## Troubleshooting
 
-```bash
-curl -X POST http://localhost:3000/shop-api \
-  -H "Content-Type: application/json" \
-  -d '{
-    "query": "mutation TestGitHubAuth($input: AuthenticationInput!) { authenticate(input: $input) { __typename ... on CurrentUser { id identifier } ... on ErrorResult { errorCode message } } }",
-    "variables": {
-      "input": {
-        "github": {
-          "code": "YOUR_AUTHORIZATION_CODE"
-        }
-      }
-    }
-  }'
-```
+### Common Issues
 
-### 4. Expected Responses
+1. **404 on GitHub redirect**: Check `GITHUB_CLIENT_ID` environment variable
+2. **Invalid client error**: Verify GitHub OAuth app callback URL matches your setup
+3. **CORS errors**: Ensure frontend and backend URLs are properly configured
+4. **Session not persisting**: Check that cookies are enabled and `credentials: 'include'` is used
 
-**Success Response:**
-```json
-{
-  "data": {
-    "authenticate": {
-      "__typename": "CurrentUser",
-      "id": "2",
-      "identifier": "username-github@vendure.io"
-    }
-  }
-}
-```
+### Need Help?
 
-**Error Response (invalid code):**
-```json
-{
-  "data": {
-    "authenticate": {
-      "__typename": "InvalidCredentialsError",
-      "errorCode": "INVALID_CREDENTIALS_ERROR",
-      "message": "Invalid credentials"
-    }
-  }
-}
-```
+- Check the implementation guides in this directory
+- Review the Vendure authentication documentation
+- Examine the plugin source code for detailed implementation examples
 
-### 5. Verify User Creation
-
-Check if the user was created in the database:
-
-```bash
-# Using sqlite3
-sqlite3 shop-github-auth.sqlite "SELECT identifier, verified FROM user WHERE identifier LIKE '%-github@vendure.io';"
-
-# Or query via GraphQL (as authenticated user)
-curl -X POST http://localhost:3000/shop-api \
-  -H "Content-Type: application/json" \
-  -H "Cookie: session=YOUR_SESSION_COOKIE" \
-  -d '{
-    "query": "query { activeCustomer { id firstName lastName emailAddress } }"
-  }'
-```
-
-### 6. Test Error Cases
-
-**Test with invalid authorization code:**
-```bash
-curl -X POST http://localhost:3000/shop-api \
-  -H "Content-Type: application/json" \
-  -d '{
-    "query": "mutation { authenticate(input: { github: { code: \"invalid_code\" } }) { __typename ... on ErrorResult { errorCode message } } }"
-  }'
-```
-
-**Test with missing environment variables** (should not add GitHub strategy):
-```bash
-# Stop server, remove .env, restart server
-# Then run schema check - should not show github field
-curl -X POST http://localhost:3000/shop-api \
-  -H "Content-Type: application/json" \
-  -d '{
-    "query": "query { __type(name: \"AuthenticationInput\") { inputFields { name } } }"
-  }'
-```
-
-## Plugin Architecture
-
-The plugin consists of:
-
-- **ShopGithubAuthPlugin**: Main plugin class that configures the authentication strategy
-- **GithubAuthStrategy**: Implements the GitHub OAuth flow
-- **Types**: TypeScript interfaces for configuration options
-- **Constants**: Plugin constants and symbols
-
-## Portability
-
-This example is fully portable and can be copied to any Vendure project. Simply:
-
-1. Copy the `plugins/shop-github-auth` directory to your project
-2. Import and configure the plugin in your `vendure-config.ts`
-3. Set up the required environment variables
-4. Configure your GitHub OAuth app with the correct callback URLs
-
-## Security Notes
-
-- Store your GitHub client secret securely and never commit it to version control
-- Use environment variables for sensitive configuration
-- The plugin generates secure email addresses for GitHub users (`{username}-github@vendure.io`)
-- Users are automatically verified when created through GitHub auth
+This example demonstrates production-ready patterns for implementing third-party authentication in Vendure applications.
