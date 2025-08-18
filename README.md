@@ -71,28 +71,3 @@ examples/my-feature/
 3. **Test**: Build and run the example
 4. **Share**: Copy the config to any Vendure project
 
-## Key Features
-
-- ✅ **Fully Portable** - Configs work in any Vendure project
-- ✅ **Self-Contained** - Each example includes all dependencies
-- ✅ **Standard Structure** - Uses official Vendure patterns
-- ✅ **TypeScript Ready** - Full type safety and IntelliSense
-- ✅ **No Workspace Dependencies** - Examples are truly independent
-
-## Examples Use Cases
-
-- Payment gateway integrations
-- Custom field configurations  
-- Plugin demonstrations
-- Advanced search setups
-- Multi-tenant configurations
-- Custom authentication flows
-
-## Requirements
-
-- Node.js 16+
-- npm 7+
-
----
-
-**Need help?** Each generated example includes its own README with specific usage instructions.
