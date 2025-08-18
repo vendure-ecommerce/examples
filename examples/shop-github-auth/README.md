@@ -20,12 +20,6 @@ A complete GitHub OAuth authentication implementation for Vendure, demonstrating
 - **Implementation Guide** (`guide.md`) - Step-by-step tutorial for recreating this in any Vendure store
 - **Conceptual Overview** (`guide-tutorial.md`) - How GitHub auth fits into Vendure's architecture
 
-## Prerequisites
-
-- Node.js 18+
-- GitHub account (for creating OAuth app)
-- Basic understanding of Vendure and OAuth 2.0
-
 ## Quick Start
 
 ### 1. Clone Repository
