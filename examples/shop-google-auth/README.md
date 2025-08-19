@@ -7,7 +7,7 @@ This example demonstrates how to implement Google authentication in Vendure usin
 - **Google OAuth2 Authentication**: Sign in with Google using Google Identity Services
 - **Automatic User Creation**: Creates Vendure customer accounts from Google profile data
 - **Seamless Integration**: Works alongside native Vendure authentication
-- **Complete Frontend**: Next.js storefront with Google Sign-In button and user management
+- **Frontend Integration**: Next.js storefront with Google Sign-In button and user management
 
 ## Getting Started
 
@@ -138,9 +138,3 @@ ShopGoogleAuthPlugin.init({
 
 This example uses a separate SQLite database (`shop-google-auth.sqlite`) to avoid conflicts with other examples.
 
-## Production Considerations
-
-1. **HTTPS Required**: Google OAuth requires HTTPS in production
-2. **Domain Configuration**: Update Google OAuth settings with production domain
-3. **Environment Variables**: Use secure environment variable management
-4. **Error Handling**: Implement proper error handling for OAuth failures
