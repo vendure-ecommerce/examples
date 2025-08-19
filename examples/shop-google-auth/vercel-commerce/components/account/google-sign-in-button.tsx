@@ -12,7 +12,7 @@ const GOOGLE_CLIENT_ID = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
 declare global {
   interface Window {
     google: any;
-    handleCredentialResponse: (response: any) => void;
+    handleCredentialResponse?: (response: any) => void;
   }
 }
 
@@ -28,7 +28,7 @@ export function GoogleSignInButton() {
       try {
         const result = await signInWithGoogle(response.credential);
         
-        if (result.type === 'success') {
+        if (result?.type === 'success') {
           toast({
             variant: 'default',
             title: 'Welcome!',
@@ -39,7 +39,7 @@ export function GoogleSignInButton() {
           toast({
             variant: 'destructive',
             title: 'Authentication Failed',
-            description: result.message
+            description: result?.message || 'Unknown error occurred'
           });
         }
       } catch (error) {
