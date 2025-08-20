@@ -23,8 +23,8 @@ Follow the established Vendure documentation patterns and structure:
 ## 2. Document Format & Docusaurus Structure
 
 ### File Format Requirements
-- **File extension**: Use `.md` for standard markdown or `.mdx` for React/JSX components
-- **File location**: Place in `docs/guides/how-to/[topic-name]/index.md`
+- **File extension**: Use `.mdx` for Docusaurus compatibility (supports React/JSX components and advanced features)
+- **File location**: Place in `docs/guides/how-to/[topic-name]/index.mdx`
 - **Required frontmatter**:
 ```yaml
 ---
@@ -213,8 +213,8 @@ Refer to the complete working code for full implementation details.
 :::
 
 ## Prerequisites
-- List any required knowledge or setup
-- Include 3rd party account requirements
+- List only technical requirements and installation dependencies
+- Include 3rd party account requirements (do NOT include conceptual knowledge requirements)
 
 ## Installation
 
@@ -222,8 +222,21 @@ Refer to the complete working code for full implementation details.
 npm install required-packages
 ```
 
+:::note
+Vendure requires Node.js 20+ and uses npm as the package manager.
+:::
+
 ## 3rd Party Service Setup
 Step-by-step instructions for external service configuration...
+
+## Plugin Creation
+
+:::cli
+Create the plugin structure using Vendure CLI for enhanced portability:
+```bash
+npx vendure add -p MyPlugin
+```
+:::
 
 ## Configuration
 
@@ -231,7 +244,7 @@ Add configuration to your Vendure config:
 
 ```ts title="src/vendure-config.ts"
 // highlight-start
-import { MyPlugin } from './plugins/my-plugin';
+import { MyPlugin } from './plugins/my-plugin/my-plugin.plugin';
 // highlight-end
 
 export const config: VendureConfig = {
@@ -244,6 +257,10 @@ export const config: VendureConfig = {
     ],
 };
 ```
+
+:::note
+**IMPORTANT**: Always create plugins using the Vendure CLI. The CLI automatically places plugins in the `src/plugins/` directory and follows Vendure best practices for enhanced portability.
+:::
 
 ## [Main Section 1]
 Explanatory text...

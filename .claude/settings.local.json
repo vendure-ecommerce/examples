@@ -20,7 +20,9 @@
       "Bash(npm run:*)",
       "Bash(rm:*)",
       "Bash(sed:*)",
-      "WebFetch(domain:github.com)"
+      "WebFetch(domain:github.com)",
+      "mcp__context7__get-library-docs",
+      "Bash(npx tsc:*)"
     ],
     "deny": [],
     "ask": [
