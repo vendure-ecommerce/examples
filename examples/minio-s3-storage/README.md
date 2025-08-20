@@ -1,11 +1,12 @@
-# MinIO S3 Storage Integration for Vendure
+# MinIO S3 Storage Plugin for Vendure
 
-A complete, production-ready Vendure example demonstrating how to integrate MinIO (self-hosted S3-compatible object storage) for asset management. This example shows how to configure Vendure's AssetServerPlugin to use MinIO instead of local file storage, providing scalable and distributed asset storage capabilities.
+A complete, production-ready Vendure plugin demonstrating how to integrate MinIO (self-hosted S3-compatible object storage) for asset management. This plugin provides a clean, portable solution for configuring Vendure's asset storage to use MinIO instead of local file storage, offering scalable and distributed asset storage capabilities.
 
 ## Overview
 
-MinIO is a high-performance, S3-compatible object storage solution perfect for storing Vendure assets like product images, documents, and media files. This example demonstrates:
+MinIO is a high-performance, S3-compatible object storage solution perfect for storing Vendure assets like product images, documents, and media files. This plugin demonstrates:
 
+- **Custom Vendure Plugin** with proper plugin architecture and configuration
 - **Complete MinIO integration** using Vendure's built-in S3AssetStorageStrategy
 - **Flexible configuration** supporting both development and production environments
 - **Automatic fallback** to local storage when MinIO is not configured
@@ -135,6 +136,30 @@ minio server /data --console-address ":9090"
 
 ## Configuration
 
+### Plugin Setup
+
+Add the MinIO S3 Storage Plugin to your Vendure configuration:
+
+```typescript
+import { MinioS3StoragePlugin } from './plugins/minio-s3-storage/minio-s3-storage.plugin';
+
+export const config: VendureConfig = {
+  // ... other config
+  plugins: [
+    // MinIO S3 Storage Plugin - handles asset storage configuration
+    MinioS3StoragePlugin.init({
+      // All configuration is optional - plugin uses environment variables and sensible defaults
+      localAssetUploadDir: path.join(__dirname, "../static/assets"),
+      // Override any defaults as needed:
+      // endpoint: 'http://localhost:9000',
+      // bucket: 'my-custom-bucket',
+      // enableLocalFallback: true,
+    }),
+    // ... other plugins
+  ],
+};
+```
+
 ### MinIO Bucket Setup
 
 MinIO requires the bucket to have public read permissions for Vendure assets to work properly. Without this, assets will return 403 Forbidden errors.
@@ -168,12 +193,12 @@ COOKIE_SECRET=cookie-secret-minio-s3-storage # Cookie encryption secret
 
 ### Storage Strategy
 
-This example uses **MinIO as the primary storage strategy**:
+This plugin uses **MinIO as the primary storage strategy**:
 
 1. **Default**: Uses MinIO S3-compatible storage for all assets
 2. **Development Fallback**: Set `ENABLE_LOCAL_FALLBACK=true` to use local file storage for testing
 3. **Production Ready**: MinIO configuration with proper defaults
-4. **Clear Purpose**: Demonstrates real S3-compatible object storage integration
+4. **Plugin Architecture**: Clean, portable implementation following Vendure best practices
 
 ## Usage Examples
 
@@ -257,26 +282,51 @@ mc mb myminio/vendure-assets
 
 ## Architecture
 
+### Plugin Architecture
+
+The MinIO S3 Storage Plugin follows Vendure's plugin architecture patterns:
+
+```
+MinioS3StoragePlugin
+├── types.ts                    # TypeScript interfaces and configuration types
+├── constants.ts                # Plugin constants and injection tokens
+└── minio-s3-storage.plugin.ts  # Main plugin class and configuration logic
+```
+
+### Plugin Initialization Flow
+
+```
+Plugin.init(options)
+↓
+Resolve configuration (environment variables + options)
+↓
+Determine storage strategy (MinIO vs Local fallback)
+↓
+Configure/Replace AssetServerPlugin in Vendure config
+↓
+Return configured plugin instance
+```
+
 ### Storage Strategy Decision Flow
 
 ```
-Request to upload asset
+MinIO Plugin Configuration Check
 ↓
-Check MINIO_ENDPOINT env variable
+ENABLE_LOCAL_FALLBACK === 'true'?
 ↓
-┌─ Set? → Use MinIO S3AssetStorageStrategy
+┌─ Yes → Use LocalAssetStorageStrategy
 │         ↓
-│         Connect to MinIO server
+│         Store files in local filesystem
 │         ↓
-│         Store file in configured bucket
-│         ↓
-│         Return MinIO URL
+│         Return local file URLs
 │
-└─ Not Set? → Use LocalAssetStorageStrategy
-              ↓
-              Store file in local filesystem
-              ↓
-              Return local file path
+└─ No → Use MinIO S3AssetStorageStrategy
+         ↓
+         Connect to MinIO server (endpoint from config)
+         ↓
+         Store file in configured bucket
+         ↓
+         Return MinIO URL (endpoint/bucket/file)
 ```
 
 ## Related Documentation
@@ -288,4 +338,4 @@ Check MINIO_ENDPOINT env variable
 
 ---
 
-This example provides a complete, production-ready MinIO integration for Vendure that can be easily customized and deployed in various environments.
+This plugin provides a complete, production-ready MinIO integration for Vendure that follows proper plugin architecture patterns and can be easily customized, deployed, and ported to any Vendure project.

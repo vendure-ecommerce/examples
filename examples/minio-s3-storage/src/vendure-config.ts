@@ -10,24 +10,14 @@ import {
   EmailPlugin,
   FileBasedTemplateLoader,
 } from "@vendure/email-plugin";
-import { AssetServerPlugin, configureS3AssetStorage } from "@vendure/asset-server-plugin";
 import { AdminUiPlugin } from "@vendure/admin-ui-plugin";
 import { GraphiqlPlugin } from "@vendure/graphiql-plugin";
+import { MinioS3StoragePlugin } from "./plugins/minio-s3-storage/minio-s3-storage.plugin";
 import "dotenv/config";
 import path from "path";
 
 const IS_DEV = process.env.APP_ENV === "dev";
 const serverPort = +(process.env.PORT || 3000);
-
-// MinIO Configuration (Primary Storage)
-const useLocalFallback = process.env.ENABLE_LOCAL_FALLBACK === "true";
-const minioConfig = {
-  endpoint: process.env.MINIO_ENDPOINT || "http://localhost:9000",
-  accessKey: process.env.MINIO_ACCESS_KEY || "minioadmin",
-  secretKey: process.env.MINIO_SECRET_KEY || "minioadmin",
-  bucket: process.env.MINIO_BUCKET || "vendure-assets",
-  region: process.env.MINIO_REGION || "us-east-1",
-};
 
 export const config: VendureConfig = {
   apiOptions: {
@@ -72,32 +62,10 @@ export const config: VendureConfig = {
   customFields: {},
   plugins: [
     GraphiqlPlugin.init(),
-    AssetServerPlugin.init({
-      route: "assets",
-      assetUploadDir: path.join(__dirname, "../static/assets"),
-      // MinIO S3-compatible storage strategy (primary)
-      storageStrategyFactory: useLocalFallback
-        ? undefined // Falls back to local storage for development/testing
-        : configureS3AssetStorage({
-            bucket: minioConfig.bucket,
-            credentials: {
-              accessKeyId: minioConfig.accessKey,
-              secretAccessKey: minioConfig.secretKey,
-            },
-            nativeS3Configuration: {
-              endpoint: minioConfig.endpoint,
-              forcePathStyle: true,
-              signatureVersion: "v4",
-              // Required by AWS SDK even when using MinIO
-              region: minioConfig.region,
-            },
-          }),
-      // Dynamic asset URL prefix based on storage strategy
-      assetUrlPrefix: useLocalFallback
-        ? IS_DEV
-          ? undefined
-          : "https://www.my-shop.com/assets/"
-        : `${minioConfig.endpoint}/${minioConfig.bucket}/`,
+    // MinIO S3 Storage Plugin - handles asset storage configuration
+    MinioS3StoragePlugin.init({
+      // All configuration is optional - plugin uses environment variables and sensible defaults
+      localAssetUploadDir: path.join(__dirname, "../static/assets"),
     }),
     DefaultSchedulerPlugin.init(),
     DefaultJobQueuePlugin.init({ useDatabaseForBuffer: true }),
