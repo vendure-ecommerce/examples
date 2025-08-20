@@ -23,10 +23,11 @@ npm run dev:server
 
 ### 3. 🐳 MinIO Server Test
 ```bash
-docker-compose up -d minio
+# Use the included Docker Compose configuration
+docker compose up -d minio
 ./setup-minio.sh
 ```
-**Expected**: MinIO starts and bucket is configured with public access.
+**Expected**: MinIO starts using the pre-configured docker-compose.yml and bucket is configured with public access.
 
 ### 4. 📤 File Upload Test
 1. Navigate to http://localhost:3000/admin

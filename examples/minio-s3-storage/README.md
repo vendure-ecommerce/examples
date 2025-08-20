@@ -19,13 +19,8 @@ MinIO is a high-performance, S3-compatible object storage solution perfect for s
 # 1. Install dependencies (already done during example creation)
 npm install
 
-# 2. Start MinIO server (using Docker)
-docker run -p 9000:9000 -p 9090:9090 --name minio \
-  -e "MINIO_ACCESS_KEY=minioadmin" \
-  -e "MINIO_SECRET_KEY=minioadmin" \
-  -v /tmp/data:/data \
-  -v /tmp/config:/root/.minio \
-  minio/minio server /data --console-address ":9090"
+# 2. Start MinIO server using included Docker Compose
+docker compose up -d minio
 
 # 3. Create .env file (optional - uses defaults if not provided)
 cp .env.example .env
@@ -59,35 +54,41 @@ Access points:
 
 ## MinIO Setup
 
-### Option 1: Docker (Recommended for Development)
+### Option 1: Docker Compose (Recommended for Development)
+
+This example includes a pre-configured `docker-compose.yml` file with MinIO service:
 
 ```bash
-# Start MinIO with default credentials
+# Start MinIO using the included Docker Compose configuration
+docker compose up -d minio
+
+# View MinIO logs
+docker compose logs -f minio
+
+# Stop MinIO
+docker compose down minio
+```
+
+The included configuration provides:
+- **MinIO API**: http://localhost:9000
+- **MinIO Console**: http://localhost:9090 (admin: minioadmin/minioadmin)  
+- **Persistent storage** with Docker volumes
+- **Health checks** for reliable startup
+- **Container name**: `vendure-minio-s3-storage`
+
+### Option 2: Docker Run (Alternative)
+
+```bash
+# Start MinIO with default credentials using docker run
 docker run -p 9000:9000 -p 9090:9090 --name minio \
   -e "MINIO_ACCESS_KEY=minioadmin" \
   -e "MINIO_SECRET_KEY=minioadmin" \
   -v /tmp/data:/data \
   -v /tmp/config:/root/.minio \
   minio/minio server /data --console-address ":9090"
-
-# Or using Docker Compose (create docker-compose.yml)
-version: '3.8'
-services:
-  minio:
-    image: minio/minio
-    ports:
-      - "9000:9000"
-      - "9090:9090"
-    environment:
-      MINIO_ACCESS_KEY: minioadmin
-      MINIO_SECRET_KEY: minioadmin
-    volumes:
-      - ./minio-data:/data
-      - ./minio-config:/root/.minio
-    command: server /data --console-address ":9090"
 ```
 
-### Option 2: Production Deployment
+### Option 3: Production Deployment
 
 For production, install MinIO on your servers or use cloud-hosted MinIO services:
 
@@ -291,20 +292,6 @@ MinioS3StoragePlugin
 ├── types.ts                    # TypeScript interfaces and configuration types
 ├── constants.ts                # Plugin constants and injection tokens
 └── minio-s3-storage.plugin.ts  # Main plugin class and configuration logic
-```
-
-### Plugin Initialization Flow
-
-```
-Plugin.init(options)
-↓
-Resolve configuration (environment variables + options)
-↓
-Determine storage strategy (MinIO vs Local fallback)
-↓
-Configure/Replace AssetServerPlugin in Vendure config
-↓
-Return configured plugin instance
 ```
 
 ### Storage Strategy Decision Flow
