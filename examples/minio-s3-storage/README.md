@@ -30,6 +30,8 @@ docker run -p 9000:9000 -p 9090:9090 --name minio \
 cp .env.example .env
 
 # 4. Set up MinIO bucket with public access (REQUIRED)
+# This script creates the bucket and enables public read access
+# Without this step, asset images will return 403 Forbidden errors
 ./setup-minio.sh
 
 # 5. Build and run Vendure
@@ -104,9 +106,10 @@ minio server /data --console-address ":9090"
 
 **Automatic Setup (Recommended)**:
 ```bash
-# Run the setup script to create bucket and configure permissions
 ./setup-minio.sh
 ```
+
+**Why this is required**: MinIO defaults to private buckets. Without public read permissions, assets will return 403 Forbidden errors.
 
 **Manual Setup**:
 1. Access MinIO Console at http://localhost:9090
@@ -129,6 +132,14 @@ minio server /data --console-address ":9090"
 ```
 
 ## Configuration
+
+### MinIO Bucket Setup
+
+MinIO requires the bucket to have public read permissions for Vendure assets to work properly. Without this, assets will return 403 Forbidden errors.
+
+**Quick setup**: Run the provided script `./setup-minio.sh` to automatically create the bucket and configure permissions.
+
+**Manual setup**: Access MinIO Console at http://localhost:9090 and set the `vendure-assets` bucket to allow anonymous read access.
 
 ### Environment Variables
 

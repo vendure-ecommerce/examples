@@ -1,6 +1,18 @@
 #!/bin/bash
 # MinIO Setup Script for Vendure Assets
-# This script creates the bucket and sets up public read permissions
+#
+# PURPOSE: Configures MinIO bucket with public read permissions for Vendure asset serving
+# 
+# WHAT IT DOES:
+# 1. Waits for MinIO server to be ready (health check)
+# 2. Creates 'vendure-assets' bucket if it doesn't exist
+# 3. Sets anonymous public read access (critical for browser asset loading)
+# 4. Verifies configuration and displays bucket status
+#
+# WHY NEEDED: MinIO defaults to private buckets. Without public read access,
+# browsers get 403 Forbidden errors when loading asset images.
+#
+# USAGE: ./setup-minio.sh (run after starting MinIO with docker-compose)
 
 set -e
 
