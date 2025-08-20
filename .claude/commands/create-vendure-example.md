@@ -74,8 +74,12 @@ EXAMPLE_NAME=$(echo "$ARGUMENTS" | tr '[:upper:]' '[:lower:]' | sed 's/[^a-z0-9]
 
 ### Create Complete Example Implementation
 
-#### 1. Example Directory Structure
-Create `src/plugins/${EXAMPLE_NAME}/` with appropriate files based on functionality needed.
+#### 1. Plugin Creation via CLI
+Use Vendure CLI to create plugin structure for enhanced portability:
+```bash
+npx vendure add -p ${EXAMPLE_NAME}Plugin
+```
+The CLI automatically creates the plugin in `src/plugins/${EXAMPLE_NAME}/` with proper structure.
 
 #### 2. Generate Fully Working Implementation
 **CRITICAL**: The implementation must be **complete and functional**, not scaffolding. Use these patterns as reference:
