@@ -19,6 +19,16 @@ import path from "path";
 const IS_DEV = process.env.APP_ENV === "dev";
 const serverPort = +(process.env.PORT || 3000);
 
+// MinIO Configuration (Primary Storage)
+const useLocalFallback = process.env.ENABLE_LOCAL_FALLBACK === "true";
+const minioConfig = {
+  endpoint: process.env.MINIO_ENDPOINT || "http://localhost:9000",
+  accessKey: process.env.MINIO_ACCESS_KEY || "minioadmin",
+  secretKey: process.env.MINIO_SECRET_KEY || "minioadmin",
+  bucket: process.env.MINIO_BUCKET || "vendure-assets",
+  region: process.env.MINIO_REGION || "us-east-1",
+};
+
 export const config: VendureConfig = {
   apiOptions: {
     port: serverPort,
@@ -65,29 +75,29 @@ export const config: VendureConfig = {
     AssetServerPlugin.init({
       route: "assets",
       assetUploadDir: path.join(__dirname, "../static/assets"),
-      // MinIO S3-compatible storage strategy
-      storageStrategyFactory: process.env.MINIO_ENDPOINT
-        ? configureS3AssetStorage({
-            bucket: process.env.MINIO_BUCKET || "vendure-assets",
+      // MinIO S3-compatible storage strategy (primary)
+      storageStrategyFactory: useLocalFallback
+        ? undefined // Falls back to local storage for development/testing
+        : configureS3AssetStorage({
+            bucket: minioConfig.bucket,
             credentials: {
-              accessKeyId: process.env.MINIO_ACCESS_KEY || "minioadmin",
-              secretAccessKey: process.env.MINIO_SECRET_KEY || "minioadmin",
+              accessKeyId: minioConfig.accessKey,
+              secretAccessKey: minioConfig.secretKey,
             },
             nativeS3Configuration: {
-              endpoint: process.env.MINIO_ENDPOINT || "http://localhost:9000",
+              endpoint: minioConfig.endpoint,
               forcePathStyle: true,
               signatureVersion: "v4",
               // Required by AWS SDK even when using MinIO
-              region: process.env.MINIO_REGION || "us-east-1",
+              region: minioConfig.region,
             },
-          })
-        : undefined, // Falls back to local storage when MinIO is not configured
-      // Dynamic asset URL prefix based on MinIO configuration
-      assetUrlPrefix: process.env.MINIO_ENDPOINT
-        ? `${process.env.MINIO_ENDPOINT}/${process.env.MINIO_BUCKET || "vendure-assets"}/`
-        : IS_DEV
+          }),
+      // Dynamic asset URL prefix based on storage strategy
+      assetUrlPrefix: useLocalFallback
+        ? IS_DEV
           ? undefined
-          : "https://www.my-shop.com/assets/",
+          : "https://www.my-shop.com/assets/"
+        : `${minioConfig.endpoint}/${minioConfig.bucket}/`,
     }),
     DefaultSchedulerPlugin.init(),
     DefaultJobQueuePlugin.init({ useDatabaseForBuffer: true }),
