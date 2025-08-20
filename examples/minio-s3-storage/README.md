@@ -318,8 +318,8 @@ ENABLE_LOCAL_FALLBACK === 'true'?
 
 ## Related Documentation
 
-- [MinIO Documentation](https://docs.min.io/)
-- [AWS SDK for JavaScript v3](https://docs.aws.amazon.com/AWSJavaScriptSDK/v3/)
+- [MinIO Documentation](https://github.com/minio/minio)
+- [AWS SDK for JavaScript v3](https://docs.aws.amazon.com/AmazonS3/latest/API/Welcome.html)
 - [Vendure AssetServerPlugin](https://docs.vendure.io/reference/core-plugins/asset-server-plugin/)
 - [Vendure S3AssetStorageStrategy](https://docs.vendure.io/reference/core-plugins/asset-server-plugin/s3asset-storage-strategy/)
 
