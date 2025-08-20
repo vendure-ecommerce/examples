@@ -5,10 +5,8 @@
   "private": true,
   "scripts": {
     "create-example": "node scripts/create-example.js",
-    "dev:store": "pnpm --filter vendure-main-store dev",
-    "build:store": "pnpm --filter vendure-main-store build",
-    "install:all": "pnpm install",
-    "clean": "pnpm -r clean",
+    "install:all": "npm install",
+    "clean": "npm run clean --workspaces",
     "list:examples": "ls -la examples/"
   },
   "keywords": ["vendure", "ecommerce", "examples", "monorepo"],
