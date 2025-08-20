@@ -111,6 +111,8 @@ minio server /data --console-address ":9090"
 
 **Why this is required**: MinIO defaults to private buckets. Without public read permissions, assets will return 403 Forbidden errors.
 
+**Note**: Only required when using MinIO storage (default). Set `ENABLE_LOCAL_FALLBACK=true` to skip bucket setup and use local storage instead.
+
 **Manual Setup**:
 1. Access MinIO Console at http://localhost:9090
 2. Login with credentials (default: minioadmin/minioadmin)
@@ -146,12 +148,15 @@ MinIO requires the bucket to have public read permissions for Vendure assets to 
 Create a `.env` file or set these environment variables:
 
 ```bash
-# MinIO Configuration (required for MinIO storage)
+# MinIO Configuration (Primary Storage)
 MINIO_ENDPOINT=http://localhost:9000        # MinIO server endpoint
 MINIO_ACCESS_KEY=minioadmin                 # Access key ID
 MINIO_SECRET_KEY=minioadmin                 # Secret access key
 MINIO_BUCKET=vendure-assets                 # Bucket name for assets
 MINIO_REGION=us-east-1                      # AWS region (required by SDK)
+
+# Development/Testing Options
+ENABLE_LOCAL_FALLBACK=false                 # Set to true to use local storage instead
 
 # Vendure Configuration
 APP_ENV=dev                                 # Environment mode
@@ -161,14 +166,14 @@ SUPERADMIN_PASSWORD=superadmin              # Admin password
 COOKIE_SECRET=cookie-secret-minio-s3-storage # Cookie encryption secret
 ```
 
-### Automatic Configuration Logic
+### Storage Strategy
 
-The example uses intelligent configuration logic:
+This example uses **MinIO as the primary storage strategy**:
 
-1. **MinIO Enabled**: When `MINIO_ENDPOINT` is set, uses S3AssetStorageStrategy
-2. **Local Storage Fallback**: When MinIO variables are missing, falls back to local storage
-3. **Environment Defaults**: Provides sensible defaults for development
-4. **Production Ready**: Supports production environment variables
+1. **Default**: Uses MinIO S3-compatible storage for all assets
+2. **Development Fallback**: Set `ENABLE_LOCAL_FALLBACK=true` to use local file storage for testing
+3. **Production Ready**: MinIO configuration with proper defaults
+4. **Clear Purpose**: Demonstrates real S3-compatible object storage integration
 
 ## Usage Examples
 
