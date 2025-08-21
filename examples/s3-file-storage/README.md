@@ -129,6 +129,8 @@ S3_FORCE_PATH_STYLE=false
 3. Configure CDN endpoint if desired
 4. Set appropriate CORS policy
 
+**Important**: Use the regional endpoint (e.g., `https://fra1.digitaloceanspaces.com`) not the CDN endpoint. The AWS SDK constructs the full URL automatically.
+
 #### MinIO (Self-Hosted)
 
 ```bash
