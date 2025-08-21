@@ -7,12 +7,14 @@ Follow the established Vendure documentation patterns and structure:
 ## 1. Research and Planning
 
 ### Example-Based Guide Foundation
+
 - **Base your guide on a working example** from the `examples/` directory
 - **Link to the complete example** on GitHub: `https://github.com/vendure-ecommerce/examples/tree/master/examples/[example-name]`
 - **Focus on technical implementation** rather than boilerplate files
 - **Exclude auto-generated content** (package-lock.json, basic config files, standard directory structures)
 
-### Documentation Research  
+### Documentation Research
+
 - **Fetch current Vendure documentation** from:
   - Main docs: https://github.com/vendure-ecommerce/vendure/tree/master/docs
   - How-to guides: https://github.com/vendure-ecommerce/vendure/tree/master/docs/docs/guides/how-to
@@ -23,9 +25,11 @@ Follow the established Vendure documentation patterns and structure:
 ## 2. Document Format & Docusaurus Structure
 
 ### File Format Requirements
+
 - **File extension**: Use `.mdx` for Docusaurus compatibility (supports React/JSX components and advanced features)
 - **File location**: Place in `docs/guides/how-to/[topic-name]/index.mdx`
 - **Required frontmatter**:
+
 ```yaml
 ---
 title: "Descriptive Title"
@@ -33,12 +37,15 @@ title: "Descriptive Title"
 ```
 
 ### Docusaurus-Specific Features
+
 - **Admonitions**: Use `:::note`, `:::info`, `:::tip`, `:::warning`, `:::danger` blocks
 - **CLI callouts**: Use `:::cli` for CLI-specific instructions (see CLI Guidelines below)
 - **Code blocks**: Include language specification and optional title:
+
 ```ts title="src/my-file.ts"
 // TypeScript code here
 ```
+
 - **Highlighting**: Use `// highlight-next-line` or `// highlight-start` / `// highlight-end`
 - **Internal links**: Use relative paths `/guides/path/to/doc/`
 - **External links**: Standard markdown `[text](https://example.com)`
@@ -46,11 +53,13 @@ title: "Descriptive Title"
 ### Guide Structure and Content
 
 #### Introduction Section
+
 - Start with a brief, practical explanation of **what** the guide will accomplish
 - Explain **why** this feature/functionality is useful
 - Outline **what the reader will learn** by following the guide
 
 #### Step-by-Step Implementation
+
 - Use **clear H2 and H3 headings** to organize sections logically
 - **Progressive complexity**: Start with basic setup, then add advanced features
 - Each section should follow this pattern:
@@ -59,6 +68,7 @@ title: "Descriptive Title"
   3. Additional context or implementation notes
 
 #### Code Examples Standards
+
 - Use **TypeScript** for all code examples
 - **Extract from working example projects** - avoid theoretical code
 - Include **complete, runnable code snippets** rather than fragments
@@ -69,12 +79,14 @@ title: "Descriptive Title"
 ## 3. Writing Style Guidelines
 
 ### Tone and Voice
+
 - **Professional and educational** - assume developer-level knowledge
 - **Direct and practical** - focus on implementation details
 - **Neutral and matter-of-fact** - avoid marketing language
 - **Clear and concise** - eliminate unnecessary words
 
 ### Technical Writing Patterns
+
 - Use **active voice** when possible
 - **Define technical terms** when first introduced
 - **Provide context** before diving into code
@@ -84,12 +96,14 @@ title: "Descriptive Title"
 ## 4. Code Implementation Requirements
 
 ### TypeScript Best Practices
+
 - Use **strict type safety** - never use `any` type
 - Provide **explicit type definitions** for complex objects
 - Use **proper async/await** syntax for asynchronous operations
 - Follow **established Vendure patterns** and conventions
 
 ### Integration with Vendure
+
 - Show how to integrate with **existing Vendure systems** (plugins, strategies, etc.)
 - Demonstrate **proper configuration** in vendure-config.ts
 - Include **database schema considerations** if applicable
@@ -98,12 +112,14 @@ title: "Descriptive Title"
 ## 5. Quality and Testing
 
 ### Code Quality
+
 - Ensure all code examples **compile and run correctly**
 - Follow **Vendure's architectural patterns**
 - Include **error handling** in examples where appropriate
 - Show **testing strategies** for the implemented functionality
 
 ### Documentation Quality
+
 - **Proofread** for grammar, spelling, and technical accuracy
 - Ensure **logical flow** from concept introduction to implementation
 - Verify **code examples work** with current Vendure versions
@@ -114,6 +130,7 @@ title: "Descriptive Title"
 When writing guides that involve external services, include **precise setup instructions** with direct links and step-by-step processes for obtaining API keys and credentials.
 
 ### Example: Google OAuth Setup
+
 For guides requiring Google authentication (based on [shop-google-auth example](https://github.com/vendure-ecommerce/examples/tree/master/examples/shop-google-auth)), include:
 
 ### Setting up Google OAuth Authentication
@@ -138,12 +155,13 @@ For guides requiring Google authentication (based on [shop-google-auth example](
    ```bash
    # .env
    GOOGLE_CLIENT_ID=your_google_client_id_here
-   
+
    # Frontend .env.local
    NEXT_PUBLIC_GOOGLE_CLIENT_ID=your_google_client_id_here
    ```
 
 Apply this same pattern for other 3rd party services (Stripe, AWS, etc.) - always include:
+
 - Direct console/dashboard links
 - Step-by-step credential acquisition
 - Security configuration guidance
@@ -157,35 +175,43 @@ When including CLI commands in your guides, **always use non-interactive mode** 
 ### CLI Command Examples
 
 **Plugin Creation:**
+
 ```bash
 # Create a new plugin with specific features
 npx vendure add -p PaymentIntegrationPlugin
 ```
 
 **Entity Generation:**
+
 ```bash
 # Add an entity to an existing plugin with features
 npx vendure add -e CustomerReward --selected-plugin LoyaltyPlugin --custom-fields --translatable
 ```
 
 **Service Addition:**
+
 ```bash
 # Add a service to a plugin with specific type
 npx vendure add -s PaymentProcessorService --selected-plugin PaymentIntegrationPlugin --type entity
 ```
 
 ### CLI Callout Format
+
 Use the `:::cli` admonition for CLI-specific instructions:
 
-```markdown
+````markdown
 :::cli
 Use the non-interactive mode to quickly set up this feature:
+
 ```bash
 npx vendure add -p MyPlugin
 npx vendure add -e MyEntity --selected-plugin MyPlugin --custom-fields
 ```
+````
+
 :::
-```
+
+````
 
 ### Migration Commands
 For database-related guides, include migration commands:
@@ -196,11 +222,11 @@ npx vendure migrate -g add-custom-payment-fields
 
 # Run pending migrations
 npx vendure migrate -r
-```
+````
 
 ## 8. Final Structure Template
 
-```markdown
+````markdown
 ---
 title: "Descriptive Title"
 ---
@@ -208,11 +234,12 @@ title: "Descriptive Title"
 Brief introduction explaining what this guide covers and why it's useful.
 
 :::info
-This guide is based on the [example-name](https://github.com/vendure-ecommerce/examples/tree/master/examples/example-name) example. 
+This guide is based on the [example-name](https://github.com/vendure-ecommerce/examples/tree/master/examples/example-name) example.
 Refer to the complete working code for full implementation details.
 :::
 
 ## Prerequisites
+
 - List only technical requirements and installation dependencies
 - Include 3rd party account requirements (do NOT include conceptual knowledge requirements)
 
@@ -221,21 +248,25 @@ Refer to the complete working code for full implementation details.
 ```bash
 npm install required-packages
 ```
+````
 
 :::note
 Vendure requires Node.js 20+ and uses npm as the package manager.
 :::
 
 ## 3rd Party Service Setup
+
 Step-by-step instructions for external service configuration...
 
 ## Plugin Creation
 
 :::cli
 Create the plugin structure using Vendure CLI for enhanced portability:
+
 ```bash
 npx vendure add -p MyPlugin
 ```
+
 :::
 
 ## Configuration
@@ -244,17 +275,17 @@ Add configuration to your Vendure config:
 
 ```ts title="src/vendure-config.ts"
 // highlight-start
-import { MyPlugin } from './plugins/my-plugin/my-plugin.plugin';
+import { MyPlugin } from "./plugins/my-plugin/my-plugin.plugin";
 // highlight-end
 
 export const config: VendureConfig = {
-    // ... other config
-    plugins: [
-        // highlight-next-line
-        MyPlugin.init({
-            // configuration options
-        }),
-    ],
+  // ... other config
+  plugins: [
+    // highlight-next-line
+    MyPlugin.init({
+      // configuration options
+    }),
+  ],
 };
 ```
 
@@ -263,6 +294,7 @@ export const config: VendureConfig = {
 :::
 
 ## [Main Section 1]
+
 Explanatory text...
 
 ```ts title="src/plugins/my-plugin/my-service.ts"
@@ -271,13 +303,16 @@ Explanatory text...
 
 :::cli
 Use the non-interactive mode to quickly set up this feature:
+
 ```bash
 npx vendure add -p MyPlugin
 npx vendure add -e MyEntity --selected-plugin MyPlugin --custom-fields
 ```
+
 :::
 
 ## [Main Section 2]
+
 Continue with progressive complexity...
 
 ## Testing
@@ -287,6 +322,7 @@ How to test the implementation...
 ## Conclusion
 
 Brief summary of what was accomplished and next steps.
+
 ```
 
 Remember to:
@@ -298,3 +334,4 @@ Remember to:
 - **Maintain consistency** with existing Vendure documentation style
 - **Focus on developer experience** and ease of implementation
 - **Include precise 3rd party setup instructions** with direct links and step-by-step processes
+```

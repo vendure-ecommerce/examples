@@ -7,12 +7,14 @@ This command will generate a lightweight, portable, and production-ready example
 ## 1. Research and Analysis
 
 ### Understand the Request
+
 - **Parse the example description**: "$ARGUMENTS"
 - **Analyze what functionality is needed**: Break down the request to understand the core requirements
 - **Determine Vendure integration points**: What Vendure APIs, strategies, or services need to be extended or integrated with?
 - **Generate appropriate example name**: Convert description to kebab-case (e.g., "Microsoft OAuth SSO" → "microsoft-oauth-sso")
 
 ### Research Current Vendure Documentation
+
 - **Fetch latest Vendure docs** using Context7 MCP server or https://docs.vendure.io/llms.txt
 - **Focus research on relevant areas** based on the request analysis:
   - Core plugin architecture and patterns
@@ -25,32 +27,38 @@ This command will generate a lightweight, portable, and production-ready example
 ## 2. Dynamic Architecture Planning
 
 ### Analyze Required Components
+
 Based on the request analysis, determine what components are needed for the example. Use these concrete patterns as reference (examples typically contain Vendure plugins):
 
 **OAuth/Authentication Example Pattern:**
+
 - Custom authentication strategy extending Vendure's `ExternalAuthenticationService`
 - OAuth flow implementation with actual token exchange
 - User profile mapping and account creation/linking
 - Session management and authentication state
-- *Must be fully functional: users can actually log in successfully*
+- _Must be fully functional: users can actually log in successfully_
 
 **Payment Gateway Example Pattern:**
+
 - Payment method handler implementing Vendure's payment interfaces
 - Real payment processing with SDK integration
 - Webhook endpoint handling for payment status updates
 - Transaction state management and error handling
-- *Must be fully functional: payments can actually be processed*
+- _Must be fully functional: payments can actually be processed_
 
 **Storage Integration Example Pattern:**
+
 - Asset storage strategy implementing Vendure's storage interfaces `AssetServerPlugin`
 - Use `S3AssetStorageStrategy` as reference implementation
 - File upload/download operations with real cloud service APIs
 - URL generation and asset serving
 - Configuration for development vs production environments
-- *Must be fully functional: files can actually be stored and retrieved*
+- _Must be fully functional: files can actually be stored and retrieved_
 
 ### Define Example Architecture
+
 Dynamically determine based on the request:
+
 - **Configuration interface**: What settings and options should be configurable?
 - **Environment variables**: What credentials, URLs, and runtime settings are needed?
 - **Dependencies**: What external npm packages or SDKs are required?
@@ -61,6 +69,7 @@ Dynamically determine based on the request:
 ## 3. Implementation
 
 ### Generate Example Name and Structure
+
 ```bash
 # Convert description to kebab-case example name
 # Example: "Microsoft OAuth SSO integration" → "microsoft-oauth-sso"
@@ -68,6 +77,7 @@ EXAMPLE_NAME=$(echo "$ARGUMENTS" | tr '[:upper:]' '[:lower:]' | sed 's/[^a-z0-9]
 ```
 
 ### Copy Base Example Structure
+
 - **Use existing create-example.js** as foundation for directory structure
 - **Copy from `store/` directory** to create base project
 - **Modify for example-specific database** (separate SQLite file)
@@ -75,34 +85,42 @@ EXAMPLE_NAME=$(echo "$ARGUMENTS" | tr '[:upper:]' '[:lower:]' | sed 's/[^a-z0-9]
 ### Create Complete Example Implementation
 
 #### 1. Plugin Creation via CLI
+
 Use Vendure CLI to create plugin structure for enhanced portability:
+
 ```bash
 npx vendure add -p ${EXAMPLE_NAME}Plugin
 ```
+
 The CLI automatically creates the plugin in `src/plugins/${EXAMPLE_NAME}/` with proper structure.
 
 #### 2. Generate Fully Working Implementation
+
 **CRITICAL**: The implementation must be **complete and functional**, not scaffolding. Use these patterns as reference:
 
 **For OAuth/Authentication (Example: Microsoft OAuth):**
+
 - Implement actual OAuth 2.0 flow with Microsoft Graph API
 - Handle token exchange, user profile fetching, and account mapping
 - Include proper error handling and security measures
-- *Result: Users can actually sign in with Microsoft accounts*
+- _Result: Users can actually sign in with Microsoft accounts_
 
 **For Payment Gateways (Example: Stripe Integration):**
+
 - Implement real Stripe payment processing with SDK
 - Handle payment intents, webhooks, and status updates
 - Include proper error handling and retry logic
-- *Result: Payments can actually be processed through Stripe*
+- _Result: Payments can actually be processed through Stripe_
 
 **For Storage Solutions (Example: AWS S3 Integration):**
+
 - Implement actual S3 operations using AWS SDK
 - Handle file uploads, downloads, and URL generation
 - Include proper authentication and error handling
-- *Result: Files can actually be stored and retrieved from S3*
+- _Result: Files can actually be stored and retrieved from S3_
 
 #### 3. Core Plugin Structure
+
 Generate TypeScript types, constants, and main plugin class:
 
 ```typescript
@@ -112,7 +130,7 @@ export interface PluginOptions {
 }
 
 // constants.ts - Plugin metadata and injection tokens
-export const PLUGIN_OPTIONS = 'PLUGIN_OPTIONS';
+export const PLUGIN_OPTIONS = "PLUGIN_OPTIONS";
 
 // main-plugin.plugin.ts - Complete implementation
 @VendurePlugin({
@@ -128,7 +146,9 @@ export class MainPlugin {
 ```
 
 #### 4. Integration Implementation Requirements
+
 **Each plugin must include working code that:**
+
 - **Connects to real external services** (not mock implementations)
 - **Handles authentication and authorization** properly
 - **Includes comprehensive error handling** and logging
@@ -139,7 +159,9 @@ export class MainPlugin {
 ### Update Project Configuration
 
 #### 1. Package.json Dependencies
+
 Add required dependencies based on integration:
+
 ```json
 {
   "dependencies": {
@@ -152,22 +174,25 @@ Add required dependencies based on integration:
 ```
 
 #### 2. Environment Configuration
+
 Add environment variables with fallbacks:
+
 ```typescript
 // In vendure-config.ts
 const config: VendureConfig = {
   // Plugin environment variables with fallbacks
   plugins: [
     PluginName.init({
-      apiKey: process.env.PLUGIN_API_KEY || 'development-key',
+      apiKey: process.env.PLUGIN_API_KEY || "development-key",
       webhookUrl: process.env.PLUGIN_WEBHOOK_URL,
-      enabled: process.env.NODE_ENV === 'production',
+      enabled: process.env.NODE_ENV === "production",
     }),
   ],
 };
 ```
 
 #### 3. Database Configuration
+
 - Separate SQLite database for the example
 - Migration support if custom entities needed
 - Proper TypeORM configuration
@@ -175,24 +200,29 @@ const config: VendureConfig = {
 ## 4. Documentation Creation
 
 ### Comprehensive README.md
+
 Create detailed documentation including:
 
-```markdown
+````markdown
 # ${PluginDisplayName}
 
 A complete, production-ready Vendure plugin for ${integration description}.
 
 ## Overview
+
 Brief description of what the plugin does and why it's useful.
 
 ## Quick Start
+
 ```bash
 npm install
 npm run build --workspace=${plugin-name}
 npm run dev:server --workspace=${plugin-name}
 ```
+````
 
 ## Features
+
 - ✅ Complete ${integration} implementation
 - ✅ TypeScript best practices (no `any` types)
 - ✅ Environment-based configuration
@@ -200,24 +230,31 @@ npm run dev:server --workspace=${plugin-name}
 - ✅ Production-ready architecture
 
 ## Configuration
+
 Detail all configuration options, environment variables, and setup steps.
 
 ## Integration with ${Service}
+
 Step-by-step setup instructions for the external service:
+
 1. Account creation and API key generation
 2. Webhook configuration (if applicable)
 3. Security and permissions setup
 4. Environment variable configuration
 
 ## Usage Examples
+
 Practical examples of how to use the plugin.
 
 ## Customization
+
 How to extend and modify the plugin for specific needs.
 
 ## Architecture
+
 Technical overview of the plugin's design and integration points.
-```
+
+````
 
 ### Minimal TESTING.md
 Create focused testing documentation that validates core functionality:
@@ -233,17 +270,21 @@ Quick validation steps for the ${integration} integration.
 ```bash
 cd examples/${plugin-name}
 npm run build
-```
+````
+
 **Expected**: No TypeScript errors, builds successfully.
 
 ### 2. Local Fallback Test 🏠
+
 ```bash
 # Start without external service configuration
 npm run dev:server
 ```
+
 **Expected**: Server starts, uses fallback behavior, admin accessible at `http://localhost:3000/admin`.
 
 ### 3. Core Functionality Test 🎯
+
 ```bash
 # Configure service credentials in .env file
 [SERVICE_SPECIFIC_ENV_VARS]
@@ -253,23 +294,27 @@ npm run dev:server
 ```
 
 **Implementation-Specific Core Test**:
+
 - **Storage Integration**: Upload a file via admin UI → Verify file is stored in external service
 - **OAuth Integration**: Attempt SSO login → Verify successful authentication and user creation
 - **Payment Integration**: Process a test payment → Verify transaction completes successfully
 - **API Integration**: Trigger service interaction → Verify API communication works
 
 ## Success Criteria ✅
+
 - **Build completes** without TypeScript errors
 - **Server starts** with fallback behavior when service not configured
 - **Core functionality works** when service is properly configured
 - **Integration validates** with real external service
 
 ## Quick Troubleshooting 🔧
+
 **Build fails**: Run `npm install` to ensure dependencies are installed
 **Server won't start**: Check for port conflicts (default: 3000)
 **Integration fails**: Verify credentials and service configuration in .env file
 
 Total testing time: ~5 minutes
+
 ```
 
 ## 5. Quality Assurance
@@ -305,6 +350,7 @@ Total testing time: ~5 minutes
 ### Project Structure Validation
 Ensure the generated plugin follows this structure:
 ```
+
 examples/${plugin-name}/
 ├── README.md                 # Comprehensive documentation
 ├── TESTING-MINIMAL.md       # Focused 5-minute testing guide
@@ -315,11 +361,12 @@ examples/${plugin-name}/
 │   ├── index.ts             # Server entry point
 │   ├── index-worker.ts      # Worker entry point
 │   └── plugins/${plugin-name}/
-│       ├── ${plugin-name}.plugin.ts  # Main plugin class
-│       ├── types.ts         # TypeScript interfaces
-│       ├── constants.ts     # Plugin constants
-│       └── [additional implementation files]
-└── ${plugin-name}.sqlite    # Separate database file
+│ ├── ${plugin-name}.plugin.ts # Main plugin class
+│ ├── types.ts # TypeScript interfaces
+│ ├── constants.ts # Plugin constants
+│ └── [additional implementation files]
+└── ${plugin-name}.sqlite # Separate database file
+
 ```
 
 ### Installation and Testing
@@ -348,3 +395,4 @@ Before considering the example complete, verify:
 - **TypeScript compiles without errors** and follows best practices
 
 Remember: This command should create a **complete, working example implementation** (typically containing a Vendure plugin) that someone can immediately configure, test, and deploy. The example should demonstrate actual, functional integration with the requested service or feature.
+```

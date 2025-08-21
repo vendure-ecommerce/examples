@@ -9,7 +9,12 @@
     "clean": "npm run clean --workspaces",
     "list:examples": "ls -la examples/"
   },
-  "keywords": ["vendure", "ecommerce", "examples", "monorepo"],
+  "keywords": [
+    "vendure",
+    "ecommerce",
+    "examples",
+    "monorepo"
+  ],
   "author": "",
   "license": "MIT",
   "devDependencies": {
@@ -19,7 +24,7 @@
     "concurrently": "9.2.0",
     "@vendure/cli": "3.4.0"
   },
-	"workspaces": [
-					"examples/*"
-	]
+  "workspaces": [
+    "examples/*"
+  ]
 }
