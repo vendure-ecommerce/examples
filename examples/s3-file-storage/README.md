@@ -147,6 +147,22 @@ S3_FORCE_PATH_STYLE=true
 3. Generate access keys
 4. Configure bucket policy for public access
 
+**Quick Start with Docker Compose:**
+```bash
+# Start MinIO using the included docker-compose.yml
+docker compose up -d minio
+
+# Access MinIO Console at http://localhost:9090
+# Login: minioadmin / minioadmin
+# Create bucket: vendure-assets
+
+# Use the .env.example.minio configuration
+cp .env.example.minio .env
+# No credential changes needed - defaults work with Docker setup
+```
+
+The included `docker-compose.yml` provides a ready-to-use MinIO setup with default credentials (`minioadmin`/`minioadmin`) and proper health checks.
+
 #### CloudFlare R2
 
 ```bash
