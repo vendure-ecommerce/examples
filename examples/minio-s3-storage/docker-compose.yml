@@ -1,0 +1,148 @@
+# INFORMATION
+# We are not exposing the default ports for the services in this file.
+# This is to avoid conflicts with existing services on your machine.
+# In case you don't have any services running on the default ports, you can expose them by changing the
+# ports section in the services block. Please don't forget to update the ports in the .env file as well.
+
+services:
+    postgres_db:
+        image: postgres:16-alpine
+        volumes:
+            - postgres_db_data:/var/lib/postgresql/data
+        ports:
+            - "6543:5432"
+        environment:
+            POSTGRES_DB: 
+            POSTGRES_USER: 
+            POSTGRES_PASSWORD: 
+        labels:
+            - "io.vendure.create.name=store"
+
+    mysql_db:
+        image: mysql:8
+        volumes:
+            - mysql_db_data:/var/lib/mysql
+        environment:
+            MYSQL_ROOT_PASSWORD: 'ROOT'
+            MYSQL_DATABASE: 
+            MYSQL_USER: 
+            MYSQL_PASSWORD: 
+        ports:
+            - "4306:3306"
+        labels:
+            - "io.vendure.create.name=store"
+
+    mariadb_db:
+        image: mariadb:10
+        volumes:
+            - mariadb_db_data:/var/lib/mysql
+        environment:
+            MARIADB_ROOT_PASSWORD: 'ROOT'
+            MARIADB_DATABASE: 
+            MARIADB_USER: 
+            MARIADB_PASSWORD: 
+        ports:
+            - "3306:3306"
+        labels:
+            - "io.vendure.create.name=store"
+
+    # RECOMMENDED (especially for production)
+    # Want to use our BullMQ with Redis instead of our default database job queue?
+    # Checkout our BullMQ plugin: https://docs.vendure.io/reference/core-plugins/job-queue-plugin/bull-mqjob-queue-plugin/
+    redis:
+        image: redis:7-alpine
+        ports:
+            - "6479:6379"
+        volumes:
+            - redis_data:/data
+        labels:
+            - "io.vendure.create.name=store"
+
+    # RECOMMENDED
+    # Want to use Typesense instead of our default search engine?
+    # Checkout our advanced search plugin: https://vendure.io/hub/vendure-plus-advanced-search-plugin
+    # To run the typesense container run "docker compose up -d typesense"
+    typesense:
+        image: typesense/typesense:27.0
+        command: [ '--data-dir', '/data', '--api-key', 'SuperSecret' ]
+        ports:
+            - "8208:8108"
+        volumes:
+            - typesense_data:/data
+        labels:
+            - "io.vendure.create.name=store"
+
+    # Want to use Elasticsearch instead of our default database engine?
+    # Checkout our Elasticsearch plugin: https://docs.vendure.io/reference/core-plugins/elasticsearch-plugin/
+    # To run the elasticsearch container run "docker compose up -d elasticsearch"
+    elasticsearch:
+        image: docker.elastic.co/elasticsearch/elasticsearch:7.1.1
+        environment:
+            discovery.type: single-node
+            bootstrap.memory_lock: true
+            ES_JAVA_OPTS: -Xms512m -Xmx512m
+        volumes:
+            - elasticsearch_data:/usr/share/elasticsearch/data
+        ports:
+            - "9300:9200"
+        labels:
+            - "io.vendure.create.name=store"
+
+    # MinIO S3-compatible object storage for asset management
+    # Access MinIO Console at http://localhost:9090 (admin: minioadmin/minioadmin)
+    # Create bucket: vendure-assets via console
+    minio:
+        image: minio/minio:latest
+        container_name: vendure-minio-s3-storage
+        ports:
+            - "9000:9000"  # MinIO API
+            - "9090:9090"  # MinIO Console
+        environment:
+            MINIO_ACCESS_KEY: minioadmin
+            MINIO_SECRET_KEY: minioadmin
+        volumes:
+            - minio_data:/data
+            - minio_config:/root/.minio
+        command: server /data --console-address ":9090"
+        healthcheck:
+            test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/ready"]
+            interval: 30s
+            timeout: 20s
+            retries: 3
+            start_period: 5s
+        labels:
+            - "io.vendure.create.name=minio-s3-storage"
+
+volumes:
+    postgres_db_data:
+        driver: local
+        labels:
+            - "io.vendure.create.name=store"
+    mysql_db_data:
+        driver: local
+        labels:
+            - "io.vendure.create.name=store"
+    mariadb_db_data:
+        driver: local
+        labels:
+            - "io.vendure.create.name=store"
+    typesense_data:
+        driver: local
+        labels:
+            - "io.vendure.create.name=store"
+    elasticsearch_data:
+        driver: local
+        labels:
+            - "io.vendure.create.name=store"
+    redis_data:
+        driver: local
+        labels:
+            - "io.vendure.create.name=store"
+    minio_data:
+        driver: local
+        labels:
+            - "io.vendure.create.name=minio-s3-storage"
+    minio_config:
+        driver: local
+        labels:
+            - "io.vendure.create.name=minio-s3-storage"
