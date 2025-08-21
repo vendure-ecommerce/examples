@@ -28,7 +28,12 @@ cd examples/s3-file-storage
 npm install
 
 # Configure your storage provider (see Configuration section)
-cp .env.example .env
+# Choose the appropriate .env.example file for your provider:
+# cp .env.example.aws-s3 .env                    # For AWS S3
+# cp .env.example.digital-ocean-spaces .env      # For Digital Ocean Spaces  
+# cp .env.example.minio .env                     # For MinIO
+# cp .env.example.cloudflare-r2 .env             # For CloudFlare R2
+# cp .env.example .env                           # For general setup guide
 # Edit .env with your storage provider credentials
 
 # Build and run
@@ -45,7 +50,29 @@ Visit:
 
 ### Environment Variables
 
-Create a `.env` file in the project root with your storage provider configuration:
+This example includes pre-configured `.env.example` files for each supported provider:
+
+- **`.env.example`** - General template with all providers
+- **`.env.example.aws-s3`** - AWS S3 specific configuration  
+- **`.env.example.digital-ocean-spaces`** - Digital Ocean Spaces configuration
+- **`.env.example.minio`** - MinIO self-hosted configuration
+- **`.env.example.cloudflare-r2`** - CloudFlare R2 configuration
+
+**Quick Setup:**
+```bash
+# Copy the appropriate template for your provider
+cp .env.example.aws-s3 .env           # For AWS S3
+# OR
+cp .env.example.digital-ocean-spaces .env  # For Digital Ocean Spaces
+# OR  
+cp .env.example.minio .env            # For MinIO
+# OR
+cp .env.example.cloudflare-r2 .env    # For CloudFlare R2
+
+# Then edit .env with your actual credentials
+```
+
+**General template structure:**
 
 ```bash
 # Basic Vendure Configuration
