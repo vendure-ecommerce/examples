@@ -219,45 +219,57 @@ How to extend and modify the plugin for specific needs.
 Technical overview of the plugin's design and integration points.
 ```
 
-### Comprehensive TESTING.md
-Create detailed testing documentation:
+### Minimal TESTING.md
+Create focused testing documentation that validates core functionality:
 
 ```markdown
-# Testing Guide
+# Minimal Testing Guide: ${PluginDisplayName}
 
-## Test Levels
+Quick validation steps for the ${integration} integration.
 
-### 1. 🏗️ Build and Lint Testing (Required)
+## Essential Tests
+
+### 1. Build Validation ⚡
 ```bash
-npm run build --workspace=${plugin-name}
-npm run lint || npx tsc --noEmit
+cd examples/${plugin-name}
+npm run build
 ```
-Validates TypeScript compilation and code quality.
+**Expected**: No TypeScript errors, builds successfully.
 
-### 2. 🔧 Plugin Integration Testing (Required)
+### 2. Local Fallback Test 🏠
 ```bash
-npm run dev:server --workspace=${plugin-name}
+# Start without external service configuration
+npm run dev:server
 ```
-Tests plugin loads and integrates with Vendure core.
+**Expected**: Server starts, uses fallback behavior, admin accessible at `http://localhost:3000/admin`.
 
-### 3. 🧪 Functional Testing (Integration-Specific)
-Test the actual plugin functionality:
-- Authentication flows (for auth plugins)
-- Payment processing (for payment plugins)
-- File operations (for storage plugins)
-- Service communication (for API integrations)
+### 3. Core Functionality Test 🎯
+```bash
+# Configure service credentials in .env file
+[SERVICE_SPECIFIC_ENV_VARS]
 
-### 4. 📋 Configuration Testing
-Test environment variables and configuration options.
+# Start server
+npm run dev:server
+```
 
-### 5. 🌐 End-to-End Testing
-Test complete workflows in realistic scenarios.
+**Implementation-Specific Core Test**:
+- **Storage Integration**: Upload a file via admin UI → Verify file is stored in external service
+- **OAuth Integration**: Attempt SSO login → Verify successful authentication and user creation
+- **Payment Integration**: Process a test payment → Verify transaction completes successfully
+- **API Integration**: Trigger service interaction → Verify API communication works
 
-## Troubleshooting
-Common issues and solutions specific to the integration.
+## Success Criteria ✅
+- **Build completes** without TypeScript errors
+- **Server starts** with fallback behavior when service not configured
+- **Core functionality works** when service is properly configured
+- **Integration validates** with real external service
 
-## Performance Testing
-Guidelines for load testing and performance validation.
+## Quick Troubleshooting 🔧
+**Build fails**: Run `npm install` to ensure dependencies are installed
+**Server won't start**: Check for port conflicts (default: 3000)
+**Integration fails**: Verify credentials and service configuration in .env file
+
+Total testing time: ~5 minutes
 ```
 
 ## 5. Quality Assurance
@@ -281,12 +293,12 @@ Guidelines for load testing and performance validation.
 - Extend configuration properly
 - Handle Vendure lifecycle events
 
-### Testing Validation
-- Plugin loads without errors
-- Configuration options work correctly
-- Integration functions as expected
-- Error handling works properly
-- Documentation is accurate and complete
+### Minimal Testing Validation
+- Plugin builds without TypeScript errors
+- Server starts with fallback behavior (no external service required)
+- Core functionality works with proper service configuration
+- Integration validates with real external service
+- Essential operations complete successfully
 
 ## 6. Final Steps
 
@@ -295,7 +307,7 @@ Ensure the generated plugin follows this structure:
 ```
 examples/${plugin-name}/
 ├── README.md                 # Comprehensive documentation
-├── TESTING.md               # Testing instructions
+├── TESTING-MINIMAL.md       # Focused 5-minute testing guide
 ├── package.json             # Dependencies and scripts
 ├── tsconfig.json            # TypeScript configuration
 ├── src/
@@ -320,7 +332,7 @@ The generated example must be:
 - ✅ **Functionally Complete**: The core functionality actually works (OAuth login succeeds, payments process, files upload, etc.)
 - ✅ **Portable**: Can be copied to any Vendure project and configured
 - ✅ **Type-safe**: Proper TypeScript without `any` types
-- ✅ **Well-documented**: Comprehensive README with setup instructions and testing guide
+- ✅ **Well-documented**: Comprehensive README with setup instructions and minimal testing guide
 - ✅ **Production-ready**: Error handling, security, performance considerations
 - ✅ **Integration-specific**: Actually implements the requested functionality with real external service connections
 - ✅ **Immediately Testable**: Can be tested end-to-end following the provided instructions
@@ -332,7 +344,7 @@ Before considering the example complete, verify:
 - **Environment variables are properly configured** with fallbacks
 - **Error handling covers common failure scenarios**
 - **Documentation includes complete setup instructions** for the external service
-- **Testing instructions can be followed successfully**
+- **Minimal testing instructions validate core functionality successfully**
 - **TypeScript compiles without errors** and follows best practices
 
 Remember: This command should create a **complete, working example implementation** (typically containing a Vendure plugin) that someone can immediately configure, test, and deploy. The example should demonstrate actual, functional integration with the requested service or feature.
