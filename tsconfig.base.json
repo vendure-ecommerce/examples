@@ -2,31 +2,25 @@
   "compilerOptions": {
     "module": "nodenext",
     "moduleResolution": "nodenext",
-    "allowSyntheticDefaultImports": true,
-    "esModuleInterop": true,
+    "target": "es2019",
+    "lib": ["es2019", "esnext.asynciterable"],
     "emitDecoratorMetadata": true,
     "experimentalDecorators": true,
-    "strictPropertyInitialization": false,
-    "target": "es2019",
+    "sourceMap": true,
     "strict": true,
-    "sourceMap": false,
+    "strictNullChecks": true,
+    "strictPropertyInitialization": false,
+    "esModuleInterop": true,
     "skipLibCheck": true,
-    "outDir": "./dist",
-    "baseUrl": "./",
-    "declaration": true,
-    "declarationMap": true,
     "forceConsistentCasingInFileNames": true,
-    "resolveJsonModule": true
-  },
-  "exclude": [
-    "node_modules",
-    "migration.ts",
-    "src/plugins/**/ui/*",
-    "src/plugins/**/dashboard/*",
-    "admin-ui",
-    "vite.*.*ts"
-  ],
-  "ts-node": {
-    "files": true
+    "resolveJsonModule": true,
+    "baseUrl": ".",
+    "paths": {
+      "@shared/*": ["./src/*"],
+      "@shared/config": ["./src/vendure-config.base.ts"],
+      "@shared/base": ["./src/vendure-config.base.ts"],
+      "@shared/server": ["./src/index.base.ts"],
+      "@shared/worker": ["./src/index-worker.base.ts"]
+    }
   }
 }

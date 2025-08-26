@@ -5,9 +5,15 @@
   "private": true,
   "scripts": {
     "create-example": "node scripts/create-example.js",
-    "install:all": "npm install",
+    "docker:up": "docker-compose up -d",
+    "docker:down": "docker-compose down",
+    "docker:reset": "docker-compose down -v && npm run docker:up",
+    "dev": "npm run docker:up && echo 'Docker services started. Run npm run dev in any example directory'",
+    "install:all": "npm install && npm install --workspaces",
     "clean": "npm run clean --workspaces",
-    "list:examples": "ls -la examples/"
+    "list:examples": "ls -la examples/",
+    "migrate-db": "node scripts/migrate-db.js",
+    "reset-db": "node scripts/reset-db.js"
   },
   "keywords": [
     "vendure",
@@ -17,12 +23,24 @@
   ],
   "author": "",
   "license": "MIT",
+  "dependencies": {
+    "@vendure/admin-ui-plugin": "^3.4.0",
+    "@vendure/asset-server-plugin": "^3.4.0",
+    "@vendure/core": "^3.4.0",
+    "@vendure/dashboard": "^3.4.1",
+    "@vendure/email-plugin": "^3.4.0",
+    "@vendure/graphiql-plugin": "^3.4.0",
+    "@vendure/job-queue-plugin": "^3.4.1",
+    "bullmq": "^5.58.2",
+    "dotenv": "17.2.1",
+    "pg": "^8.11.3"
+  },
   "devDependencies": {
-    "typescript": "5.8.2",
     "@types/node": "^20.0.0",
-    "ts-node": "^10.0.0",
+    "@vendure/cli": "3.4.0",
     "concurrently": "9.2.0",
-    "@vendure/cli": "3.4.0"
+    "ts-node": "^10.0.0",
+    "typescript": "5.8.2"
   },
   "workspaces": [
     "examples/*"

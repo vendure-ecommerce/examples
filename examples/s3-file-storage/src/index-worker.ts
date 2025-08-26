@@ -1,20 +1,9 @@
-import { bootstrapWorker } from '@vendure/core';
+import { runWorker } from '@shared/worker';
 import { config } from './vendure-config';
-import { VendureConfig } from '@vendure/core';
-import path from 'path';
 
-const exampleConfig: VendureConfig = {
-  ...config,
-  dbConnectionOptions: {
-    type: 'better-sqlite3',
-    synchronize: true,
-    logging: false,
-    database: path.join(__dirname, '../s3-file-storage.sqlite'),
-  },
-};
-
-bootstrapWorker(exampleConfig)
-    .then(worker => worker.startJobQueue())
-    .catch(err => {
-        console.log(err);
-    });
+runWorker(config)
+  .then(() => console.log('Worker started: s3-file-storage'))
+  .catch(err => {
+    console.error(err);
+    process.exit(1);
+  });

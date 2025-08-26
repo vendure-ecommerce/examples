@@ -5,8 +5,8 @@
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
-    "dev:server": "ts-node ./src/index.ts",
-    "dev:worker": "ts-node ./src/index-worker.ts",
+    "dev:server": "node -r ts-node/register -r dotenv/config -r tsconfig-paths/register ./src/index.ts",
+    "dev:worker": "node -r ts-node/register -r dotenv/config -r tsconfig-paths/register ./src/index-worker.ts",
     "dev": "concurrently npm:dev:*",
     "build": "tsc",
     "start:server": "node ./dist/index.js",
@@ -14,20 +14,9 @@
     "start": "concurrently npm:start:*"
   },
   "dependencies": {
-    "@vendure/admin-ui-plugin": "3.4.0",
-    "@vendure/asset-server-plugin": "3.4.0",
-    "@vendure/core": "3.4.0",
-    "@vendure/email-plugin": "3.4.0",
-    "@vendure/graphiql-plugin": "3.4.0",
     "better-sqlite3": "11.10.0",
-    "dotenv": "17.2.1",
     "bcrypt": "5.1.1",
     "google-auth-library": "^9.14.2"
-  },
-  "devDependencies": {
-    "@vendure/cli": "3.4.0",
-    "concurrently": "9.2.0",
-    "typescript": "5.8.2"
   },
   "description": "Vendure example store: shop-google-auth",
   "keywords": [

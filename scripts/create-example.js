@@ -1,220 +1,139 @@
-#!/usr/bin/env node
-
+const { execSync } = require('child_process');
 const fs = require('fs');
 const path = require('path');
-const { execSync } = require('child_process');
 
-const storeName = process.argv[2];
-
-if (!storeName) {
-  console.error('Usage: npm run create-example <store-name>');
-  process.exit(1);
-}
-
-if (!/^[a-zA-Z0-9-_]+$/.test(storeName)) {
-  console.error('Store name can only contain letters, numbers, hyphens, and underscores');
-  process.exit(1);
-}
-
-const exampleDir = path.join(__dirname, '..', 'examples', storeName);
-const storeDir = path.join(__dirname, '..', 'store');
-
-if (fs.existsSync(exampleDir)) {
-  console.error(`Example store "${storeName}" already exists`);
-  process.exit(1);
-}
-
-console.log(`Creating example store: ${storeName}`);
-
-function copyRecursiveSync(src, dest, excludes = []) {
-  const stats = fs.statSync(src);
+async function createExample(name) {
+  const exampleDir = path.join(__dirname, '..', 'examples', name);
   
-  if (stats.isDirectory()) {
-    if (!fs.existsSync(dest)) {
-      fs.mkdirSync(dest, { recursive: true });
-    }
-    
-    const files = fs.readdirSync(src);
-    files.forEach(file => {
-      if (!excludes.includes(file)) {
-        copyRecursiveSync(
-          path.join(src, file), 
-          path.join(dest, file), 
-          excludes
-        );
-      }
-    });
-  } else {
-    fs.copyFileSync(src, dest);
-  }
-}
-
-copyRecursiveSync(storeDir, exampleDir, [
-  'node_modules', 
-  'dist', 
-  'vendure.sqlite', 
-  'package-lock.json'
-]);
-
-const packageJsonPath = path.join(exampleDir, 'package.json');
-const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf8'));
-
-packageJson.name = storeName;
-packageJson.description = `Vendure example store: ${storeName}`;
-packageJson.keywords = [...(packageJson.keywords || []), 'example', storeName];
-
-// Add bcrypt as direct dependency to avoid native binding issues
-packageJson.dependencies = {
-  ...packageJson.dependencies,
-  'bcrypt': '5.1.1'
-};
-
-fs.writeFileSync(packageJsonPath, JSON.stringify(packageJson, null, 2));
-
-const indexTsPath = path.join(exampleDir, 'src', 'index.ts');
-let indexTs = fs.readFileSync(indexTsPath, 'utf8');
-
-indexTs = indexTs.replace(
-  'import { config } from \'./vendure-config\';',
-  `import { config } from './vendure-config';
-import { VendureConfig } from '@vendure/core';
-import { AdminUiPlugin } from '@vendure/admin-ui-plugin';
-import path from 'path';
-
-const exampleConfig: VendureConfig = {
-  ...config,
-  dbConnectionOptions: {
-    type: 'better-sqlite3',
-    synchronize: false,
-    migrations: [path.join(__dirname, './migrations/*.+(js|ts)')],
-    logging: false,
-    database: path.join(__dirname, '../${storeName}.sqlite'),
-  },
-  plugins: [
-    ...(config.plugins || []).map((plugin: any) => {
-      if (plugin.constructor.name === 'AdminUiPlugin') {
-        return AdminUiPlugin.init({
-          route: 'admin',
-          port: 3002,
-          adminUiConfig: {
-            apiPort: 3000,
-          },
-        });
-      }
-      return plugin;
-    }),
-  ],
-};`
-);
-
-indexTs = indexTs.replace(
-  'runMigrations(config)',
-  'runMigrations(exampleConfig)'
-);
-
-indexTs = indexTs.replace(
-  'bootstrap(config)',
-  'bootstrap(exampleConfig)'
-);
-
-fs.writeFileSync(indexTsPath, indexTs);
-
-const workerTsPath = path.join(exampleDir, 'src', 'index-worker.ts');
-let workerTs = fs.readFileSync(workerTsPath, 'utf8');
-
-workerTs = workerTs.replace(
-  'import { config } from \'./vendure-config\';',
-  `import { config } from './vendure-config';
-import { VendureConfig } from '@vendure/core';
-import path from 'path';
-
-const exampleConfig: VendureConfig = {
-  ...config,
-  dbConnectionOptions: {
-    type: 'better-sqlite3',
-    synchronize: true,
-    logging: false,
-    database: path.join(__dirname, '../${storeName}.sqlite'),
-  },
-};`
-);
-
-workerTs = workerTs.replace(
-  'bootstrapWorker(config)',
-  'bootstrapWorker(exampleConfig)'
-);
-
-fs.writeFileSync(workerTsPath, workerTs);
-
-const configPath = path.join(exampleDir, 'src', 'vendure-config.ts');
-let configContent = fs.readFileSync(configPath, 'utf8');
-
-configContent = configContent.replace(
-  'process.env.SUPERADMIN_USERNAME',
-  'process.env.SUPERADMIN_USERNAME || "superadmin"'
-);
-configContent = configContent.replace(
-  'process.env.SUPERADMIN_PASSWORD',
-  'process.env.SUPERADMIN_PASSWORD || "superadmin"'
-);
-configContent = configContent.replace(
-  'process.env.COOKIE_SECRET',
-  'process.env.COOKIE_SECRET || "cookie-secret-' + storeName + '"'
-);
-configContent = configContent.replace(
-  '+process.env.PORT || 3000',
-  '+(process.env.PORT || 3000)'
-);
-
-fs.writeFileSync(configPath, configContent);
-
-const readmeMd = `# ${storeName} Example Store
-
-This is an example Vendure store demonstrating specific features or configurations.
-
-## Getting Started
-
-\`\`\`bash
-# Install dependencies
-npm install
-
-# Run in development mode (server + worker)
-npm run dev --workspace=${storeName}
-
-# Run only server
-npm run dev:server --workspace=${storeName}
-
-# Run only worker  
-npm run dev:worker --workspace=${storeName}
-
-# Build the example
-npm run build --workspace=${storeName}
-\`\`\`
-
-## Description
-
-Add a description of what this example demonstrates here.
-
-## Configuration
-
-This example extends the main Vendure store configuration. Customize the configuration in \`src/index.ts\`.
-`;
-
-fs.writeFileSync(path.join(exampleDir, 'README.md'), readmeMd);
-
-console.log(`✅ Example store "${storeName}" created successfully!`);
-console.log(`📁 Location: examples/${storeName}`);
-console.log(`🚀 To get started:`);
-console.log(`   npm install`);
-console.log(`   npm run dev:server --workspace=${storeName}`);
-
-try {
-  console.log('Installing dependencies...');
-  execSync('npm install', { 
-    cwd: path.join(__dirname, '..'),
-    stdio: 'inherit' 
+  // Step 1: Run Vendure create
+  console.log(`Creating Vendure example: ${name}`);
+  execSync(`npx @vendure/create ${name}`, {
+    cwd: path.join(__dirname, '..', 'examples'),
+    stdio: 'inherit'
   });
-  console.log('✅ Dependencies installed successfully!');
-} catch (error) {
-  console.error('⚠️  Failed to install dependencies automatically. Run "npm install" manually.');
+  
+  // Step 2: Create tsconfig.json extending base
+  const tsconfigPath = path.join(exampleDir, 'tsconfig.json');
+  const tsconfigContent = {
+    extends: "../../tsconfig.base.json",
+    compilerOptions: {
+      outDir: "./dist",
+      rootDir: "./src",
+      baseUrl: ".",
+      paths: {
+        "@shared/*": ["../../src/*"],
+        "@shared/config": ["../../src/vendure-config.base"],
+        "@shared/base": ["../../src/vendure-config.base"],
+        "@shared/server": ["../../src/index.base"],
+        "@shared/worker": ["../../src/index-worker.base"],
+        "@/*": ["./src/*"]
+      }
+    },
+    include: ["src/**/*"],
+    exclude: ["node_modules", "dist"]
+  };
+  
+  fs.writeFileSync(tsconfigPath, JSON.stringify(tsconfigContent, null, 2));
+  
+  // Step 3: Post-process vendure-config.ts with path aliases
+  const configPath = path.join(exampleDir, 'src', 'vendure-config.ts');
+  const configContent = `import { mergeConfig } from '@vendure/core';
+import { getBaseConfig } from '@shared/config';
+import "dotenv/config";
+
+// Add your custom plugins and configuration here
+const customPlugins = [];
+
+const baseConfig = getBaseConfig();
+
+export const config = mergeConfig(
+  baseConfig,
+  {
+    plugins: [
+      ...(baseConfig.plugins ?? []),
+      ...customPlugins,
+    ],
+    // Add any other overrides here
+  }
+);
+`;
+  
+  fs.writeFileSync(configPath, configContent);
+  
+  // Step 4: Update index.ts with path aliases
+  const indexPath = path.join(exampleDir, 'src', 'index.ts');
+  const indexContent = `
+import { runServer } from '@shared/server';
+import { config } from '@/vendure-config';
+
+runServer(config)
+  .then(() => console.log('Server started: ${name}'))
+  .catch(err => {
+    console.error(err);
+    process.exit(1);
+  });
+`;
+  
+  fs.writeFileSync(indexPath, indexContent);
+  
+  // Step 5: Update index-worker.ts with path aliases
+  const workerPath = path.join(exampleDir, 'src', 'index-worker.ts');
+  const workerContent = `
+import { runWorker } from '@shared/worker';
+import { config } from '@/vendure-config';
+
+runWorker(config)
+  .then(() => console.log('Worker started: ${name}'))
+  .catch(err => {
+    console.error(err);
+    process.exit(1);
+  });
+`;
+  
+  fs.writeFileSync(workerPath, workerContent);
+  
+  // Step 6: Update package.json to remove Vendure deps and fix dev scripts
+  const packageJsonPath = path.join(exampleDir, 'package.json');
+  const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf8'));
+  
+  // Remove Vendure packages that are now at root
+  const vendurePackages = [
+    '@vendure/admin-ui-plugin',
+    '@vendure/asset-server-plugin',
+    '@vendure/core',
+    '@vendure/email-plugin',
+    '@vendure/graphiql-plugin',
+    'dotenv' // Also remove dotenv as it's now loaded via -r dotenv/config
+  ];
+  
+  vendurePackages.forEach(pkg => {
+    delete packageJson.dependencies[pkg];
+    delete packageJson.devDependencies[pkg];
+  });
+  
+  // Update dev scripts to use proper Node.js setup
+  if (packageJson.scripts) {
+    packageJson.scripts['dev:server'] = 'node -r ts-node/register -r dotenv/config -r tsconfig-paths/register ./src/index.ts';
+    packageJson.scripts['dev:worker'] = 'node -r ts-node/register -r dotenv/config -r tsconfig-paths/register ./src/index-worker.ts';
+  }
+  
+  // Remove all devDependencies - they're inherited from root package.json in the workspace
+  delete packageJson.devDependencies;
+  
+  fs.writeFileSync(packageJsonPath, JSON.stringify(packageJson, null, 2));
+  
+  console.log(`✅ Example '${name}' created and configured!`);
+  console.log(`📝 Next steps:`);
+  console.log(`  1. cd examples/${name}`);
+  console.log(`  2. Add any custom plugins to src/vendure-config.ts`);
+  console.log(`  3. Run 'npm run dev' to start the example`);
 }
+
+// Run the script
+const exampleName = process.argv[2];
+if (!exampleName) {
+  console.error('Please provide an example name');
+  process.exit(1);
+}
+
+createExample(exampleName);

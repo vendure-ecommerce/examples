@@ -1,7 +1,7 @@
 node_modules
 dist
 admin-ui
-static/assets
-static/email/test-emails
+../../static/assets
+../../static/email/test-emails
 blogs/*
 

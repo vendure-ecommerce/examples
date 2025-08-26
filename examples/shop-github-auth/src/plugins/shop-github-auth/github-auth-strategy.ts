@@ -48,7 +48,7 @@ export class GithubAuthStrategy implements AuthenticationStrategy<GitHubAuthData
         code: data.code,
       }),
     })
-    const tokenData = await tokenResponse.json()
+    const tokenData = await tokenResponse.json() as any
     const accessToken = tokenData.access_token
 
     if (!accessToken) {
@@ -60,7 +60,7 @@ export class GithubAuthStrategy implements AuthenticationStrategy<GitHubAuthData
     const userResponse = await fetch('https://api.github.com/user', {
       headers: { Authorization: `Bearer ${accessToken}` },
     })
-    const userData = await userResponse.json()
+    const userData = await userResponse.json() as any
     if (!userData || !userData.id) {
       this.logger.error('No user data received from GitHub', loggerCtx)
       return false
