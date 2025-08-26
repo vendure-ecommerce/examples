@@ -3,6 +3,7 @@ node_modules/
 .pnpm-store/
 
 vendure/
+.claude/settings.local.json
 
 # Build outputs
 dist/
