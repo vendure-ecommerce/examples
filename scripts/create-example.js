@@ -7,7 +7,7 @@ async function createExample(name) {
   
   // Step 1: Run Vendure create
   console.log(`Creating Vendure example: ${name}`);
-  execSync(`npx @vendure/create ${name}`, {
+  execSync(`npx @vendure/create ${name} --log-level verbose`, {
     cwd: path.join(__dirname, '..', 'examples'),
     stdio: 'inherit'
   });
