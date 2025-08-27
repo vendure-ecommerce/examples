@@ -19,15 +19,6 @@ async function createExample(name) {
     compilerOptions: {
       outDir: "./dist",
       rootDir: "./src",
-      baseUrl: ".",
-      paths: {
-        "@shared/*": ["../../src/*"],
-        "@shared/config": ["../../src/vendure-config.base"],
-        "@shared/base": ["../../src/vendure-config.base"],
-        "@shared/server": ["../../src/index.base"],
-        "@shared/worker": ["../../src/index-worker.base"],
-        "@/*": ["./src/*"]
-      }
     },
     include: ["src/**/*"],
     exclude: ["node_modules", "dist"]
