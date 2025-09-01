@@ -1,19 +1,19 @@
 # CMS Integration Shop
 
-A complete, production-ready Vendure example demonstrating CMS integration using the "Sync with Reference" pattern. This example implements event-driven synchronization where Vendure remains the single source of truth for commerce data while the CMS owns content enrichment.
+A Vendure example demonstrating CMS integration using the "Sync with Reference" pattern.
 
-This project was generated with [`@vendure/create`](https://github.com/vendure-ecommerce/vendure/tree/master/packages/create) and enhanced with a comprehensive CMS sync plugin.
+This example implements event-driven synchronization where Vendure remains the single source of truth for commerce data while the CMS owns content enrichment.
+
+This is a bare-bones project was generated with [`@vendure/create`](https://github.com/vendure-ecommerce/vendure/tree/publish/packages/create) with a custom CMS plugin.
 
 ## Overview
 
 This implementation showcases:
 
-- ✅ **Event-driven Product sync** using Vendure's EventBus system
-- ✅ **Async job queue processing** with proper error handling and retry logic  
-- ✅ **TypeScript best practices** with strict typing and no `any` types
-- ✅ **Production-ready architecture** with configurable options
-- ✅ **Comprehensive logging** for debugging and monitoring
-- ✅ **Localization support** for multi-language product data
+- **Event-driven Product sync** using Vendure's EventBus system
+- **Job queue usage** with proper error handling and retry logic
+- **Production-ready architecture** with configurable options
+- **Comprehensive logging** for debugging and monitoring
 
 ## Useful Links
 
@@ -24,9 +24,9 @@ This implementation showcases:
 
 ## Directory structure
 
-* `/src` contains the source code of your Vendure server. All your custom code and plugins should reside here.
-* `/src/plugins/cms/` contains the CMS integration plugin implementation
-* `/static` contains static (non-code) files such as assets (e.g. uploaded images) and email templates.
+- `/src` contains the source code of your Vendure server. All your custom code and plugins should reside here.
+- `/src/plugins/cms/` contains the CMS integration plugin implementation
+- `/static` contains static (non-code) files such as assets (e.g. uploaded images) and email templates.
 
 ## CMS Plugin Architecture
 
@@ -36,7 +36,7 @@ This implementation showcases:
 ProductEvent → Event Listener → Job Queue → CMS Sync Service → External CMS API
      ↓              ↓               ↓              ↓                    ↓
   Product        Extract         Queue         Process            API Call
-  Created/       Sync Data       Job for       Sync Job          to CMS
+  Created/       Sync Data       Job for       Sync Job           to CMS
   Updated/                       Async         with Retry
   Deleted                        Processing    Logic
 ```
@@ -44,16 +44,19 @@ ProductEvent → Event Listener → Job Queue → CMS Sync Service → External 
 ### Core Components
 
 #### 1. CMS Plugin (`src/plugins/cms/cms.plugin.ts`)
+
 - **Event Listeners**: Subscribes to `ProductEvent` for real-time sync
 - **Job Queue Management**: Creates and manages async job processing
 - **Data Extraction**: Transforms Vendure product data for CMS consumption
 
 #### 2. CMS Sync Service (`src/plugins/cms/cms-sync.service.ts`)
-- **API Integration**: Handles actual CMS API calls (currently logging for demo)
-- **Error Handling**: Comprehensive error catching and reporting
+
+- **API Integration**: Handles actual CMS API call orchestration logic (currently logging for demo)
+- **Error Handling**: Error catching and reporting
 - **Retry Logic**: Built-in retry mechanism through job queue
 
 #### 3. Type Definitions (`src/plugins/cms/types.ts`)
+
 - **SyncJobData**: Job payload structure for queue processing
 - **PluginInitOptions**: Configuration options for the plugin
 - **SyncResponse**: Response format for sync operations
@@ -84,134 +87,4 @@ For each product event, the following data structure is created:
 }
 ```
 
-## Development
-
-```
-npm run dev
-```
-
-will start the Vendure server and [worker](https://www.vendure.io/docs/developer-guide/vendure-worker/) processes from
-the `src` directory.
-
-## Build
-
-```
-npm run build
-```
-
-will compile the TypeScript sources into the `/dist` directory.
-
-## Production
-
-For production, there are many possibilities which depend on your operational requirements as well as your production
-hosting environment.
-
-### Running directly
-
-You can run the built files directly with the `start` script:
-
-```
-npm run start
-```
-
-You could also consider using a process manager like [pm2](https://pm2.keymetrics.io/) to run and manage
-the server & worker processes.
-
-### Using Docker
-
-We've included a sample [Dockerfile](./Dockerfile) which you can build with the following command:
-
-```
-docker build -t vendure .
-```
-
-This builds an image and tags it with the name "vendure". We can then run it with:
-
-```
-# Run the server
-docker run -dp 3000:3000 -e "DB_HOST=host.docker.internal" --name vendure-server vendure npm run start:server
-
-# Run the worker
-docker run -dp 3000:3000 -e "DB_HOST=host.docker.internal" --name vendure-worker vendure npm run start:worker
-```
-
-Here is a breakdown of the command used above:
-
-- `docker run` - run the image we created with `docker build`
-- `-dp 3000:3000` - the `-d` flag means to run in "detached" mode, so it runs in the background and does not take
-control of your terminal. `-p 3000:3000` means to expose port 3000 of the container (which is what Vendure listens
-on by default) as port 3000 on your host machine.
-- `-e "DB_HOST=host.docker.internal"` - the `-e` option allows you to define environment variables. In this case we
-are setting the `DB_HOST` to point to a special DNS name that is created by Docker desktop which points to the IP of
-the host machine. Note that `host.docker.internal` only exists in a Docker Desktop environment and thus should only be
-used in development.
-- `--name vendure-server` - we give the container a human-readable name.
-- `vendure` - we are referencing the tag we set up during the build.
-- `npm run start:server` - this last part is the actual command that should be run inside the container.
-
-### Docker Compose
-
-We've included a [docker-compose.yml](./docker-compose.yml) file which includes configuration for commonly-used
-services such as PostgreSQL, MySQL, MariaDB, Elasticsearch and Redis.
-
-To use Docker Compose, you will need to have Docker installed on your machine. Here are installation
-instructions for [Mac](https://docs.docker.com/desktop/install/mac-install/), [Windows](https://docs.docker.com/desktop/install/windows-install/),
-and [Linux](https://docs.docker.com/desktop/install/linux/).
-
-You can start the services with:
-
-```shell
-docker-compose up <service>
-
-# examples:
-docker-compose up postgres_db
-docker-compose up redis
-```
-
-## Plugins
-
-In Vendure, your custom functionality will live in [plugins](https://www.vendure.io/docs/plugins/).
-These should be located in the `./src/plugins` directory.
-
-To create a new plugin run:
-
-```
-npx vendure add
-```
-
-and select `[Plugin] Create a new Vendure plugin`.
-
-## Migrations
-
-[Migrations](https://www.vendure.io/docs/developer-guide/migrations/) allow safe updates to the database schema. Migrations
-will be required whenever you make changes to the `customFields` config or define new entities in a plugin.
-
-To generate a new migration, run:
-
-```
-npx vendure migrate
-```
-
-The generated migration file will be found in the `./src/migrations/` directory, and should be committed to source control.
-Next time you start the server, and outstanding migrations found in that directory will be run by the `runMigrations()`
-function in the [index.ts file](./src/index.ts).
-
-If, during initial development, you do not wish to manually generate a migration on each change to customFields etc, you
-can set `dbConnectionOptions.synchronize` to `true`. This will cause the database schema to get automatically updated
-on each start, removing the need for migration files. Note that this is **not** recommended once you have production
-data that you cannot lose.
-
----
-
-You can also run any pending migrations manually, without starting the server via the "vendure migrate" command.
-
----
-
-## Troubleshooting
-
-### Error: Could not load the "sharp" module using the \[OS\]-x\[Architecture\] runtime when running Vendure server.
-
-- Make sure your Node version is ^18.17.0 || ^20.3.0 || >=21.0.0 to support the Sharp library.
-- Make sure your package manager is up to date.
-- **Not recommended**: if none of the above helps to resolve the issue, install sharp specifying your machines OS and Architecture. For example: `pnpm install sharp --config.platform=linux --config.architecture=x64` or `npm install sharp --os linux --cpu x64`
-
+This data is then processed by a CMS-specific Sync Service, which makes the API calls to the CMS.
