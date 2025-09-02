@@ -263,59 +263,20 @@ export class StrapiService {
         .join('&');
       const endpoint = `${collectionSlug}?${queryParams}`;
       
-      console.log(`\n🔍 STRAPI API REQUEST DEBUG:`);
-      console.log(`Collection: ${collectionSlug}`);
-      console.log(`Endpoint: ${endpoint}`);
-      console.log(`Full URL: ${this.strapiBaseUrl}/${endpoint}`);
-      console.log(`Slugs being searched:`, slugs);
-      console.log(`Query params: ${queryParams}`);
-
       const response = await this.makeStrapiRequest({
         method: "GET",
         endpoint,
       });
-      
-      console.log(`\n📥 STRAPI API RESPONSE:`);
-      console.log(`Status: Success`);
-      console.log(`Response type:`, typeof response);
-      console.log(`Response keys:`, Object.keys(response || {}));
-      console.log(`Response.data type:`, typeof response?.data);
-      console.log(`Response.data length:`, response?.data?.length || 'N/A');
-      console.log(`Full response:`, JSON.stringify(response, null, 2));
 
       if (response.data) {
-        console.log(`\n📋 PROCESSING DOCUMENTS:`);
-        for (let i = 0; i < response.data.length; i++) {
-          const doc = response.data[i];
-          console.log(`Document ${i + 1}:`);
-          console.log(`  - ID: ${doc?.id}`);
-          console.log(`  - Document ID: ${doc?.documentId}`);
-          console.log(`  - Slug: ${doc?.slug}`);
-          console.log(`  - Full doc:`, JSON.stringify(doc, null, 2));
-          
+        for (const doc of response.data) {
           if (doc?.slug) {
             documentMap.set(doc.slug, doc);
-            console.log(`  ✅ Added to map with key: "${doc.slug}"`);
-          } else {
-            console.log(`  ❌ No slug found, skipping`);
           }
         }
-      } else {
-        console.log(`❌ No response.data found`);
       }
       
-      console.log(`\n🗂️ FINAL DOCUMENT MAP:`);
-      console.log(`Map size: ${documentMap.size}`);
-      documentMap.forEach((doc, slug) => {
-        console.log(`  "${slug}" -> ID: ${doc?.id}`);
-      });
-      
     } catch (error) {
-      console.log(`\n💥 STRAPI API ERROR:`);
-      console.log(`Error type:`, typeof error);
-      console.log(`Error message:`, error instanceof Error ? error.message : String(error));
-      console.log(`Full error:`, error);
-      
       Logger.error(
         `Failed to find documents by slugs: ${slugs.join(", ")}`,
         String(error),
@@ -902,11 +863,6 @@ export class StrapiService {
     collectionSlug?: string | null,
     variants?: ProductVariant[],
   ) {
-    console.log(`\n=== COLLECTION TRANSFORM DEBUG ===`);
-    console.log(`Collection ID: ${collection.id}`);
-    console.log(`Collection slug: ${collectionSlug}`);
-    console.log(`Number of variants passed: ${variants?.length || 0}`);
-    
     const defaultTranslation = this.translationUtils.getTranslationByLanguage(
       collection.translations,
       defaultLanguageCode,
@@ -927,35 +883,11 @@ export class StrapiService {
     // Transform variants to document IDs
     const variantDocumentIds: string[] = [];
     if (variants && variants.length > 0) {
-      console.log(`Processing ${variants.length} variants for collection ${collection.id}`);
-      
-      // Log details of each variant
-      variants.forEach((variant, index) => {
-        console.log(`\nVariant ${index + 1}:`);
-        console.log(`  - ID: ${variant.id}`);
-        console.log(`  - Has product: ${!!variant.product}`);
-        if (variant.product) {
-          console.log(`  - Product ID: ${variant.product.id}`);
-          console.log(`  - Product has translations: ${!!variant.product.translations}`);
-          console.log(`  - Product translations count: ${variant.product.translations?.length || 0}`);
-          if (variant.product.translations?.length > 0) {
-            console.log(`  - Product translations:`, variant.product.translations.map(t => ({ languageCode: t.languageCode, name: t.name, slug: t.slug })));
-          }
-        }
-      });
       // First, collect all variant slugs we need to look up
       const variantSlugs: string[] = [];
-      console.log(`\n--- Processing ${variants.length} variants for slug generation ---`);
 
       for (const variant of variants) {
-        console.log(`\nProcessing variant ${variant.id}:`);
-        console.log(`  - Has product relation: ${!!variant.product}`);
-
         if (variant.product) {
-          console.log(`  - Product ID: ${variant.product.id}`);
-          console.log(`  - Product has translations: ${!!variant.product.translations}`);
-          console.log(`  - Product translations count: ${variant.product.translations?.length || 0}`);
-
           if (
             variant.product.translations &&
             variant.product.translations.length > 0
@@ -965,26 +897,13 @@ export class StrapiService {
               defaultLanguageCode,
             );
 
-            console.log(`  - Generated product slug: "${productSlug}"`);
-            console.log(`  - Default language code: ${defaultLanguageCode}`);
-
             if (productSlug) {
               const variantSlug = `${productSlug}-variant-${variant.id}`;
               variantSlugs.push(variantSlug);
-              console.log(`  ✓ Generated variant slug: "${variantSlug}"`);
-            } else {
-              console.log(`  ✗ No product slug found for language ${defaultLanguageCode}`);
             }
-          } else {
-            console.log(`  ✗ Product ${variant.product.id} has no translations`);
           }
-        } else {
-          console.log(`  ✗ Variant ${variant.id} has no product relation loaded`);
         }
       }
-      
-      console.log(`\n--- Generated variant slugs for collection ${collection.id}: ---`);
-      console.log(variantSlugs);
 
       // Batch lookup all variant documents at once
       Logger.debug(
@@ -992,34 +911,17 @@ export class StrapiService {
       );
 
       if (variantSlugs.length > 0) {
-        console.log(`\n--- Looking up variant documents in Strapi ---`);
-        console.log(`Looking for slugs in "${COLLECTION_SLUG.product_variant}"`);
-        console.log(`Slugs to find:`, variantSlugs);
-        
         const documentsMap = await this.findDocumentsBySlugs(
           COLLECTION_SLUG.product_variant,
           variantSlugs,
         );
 
-        console.log(`\n--- Strapi lookup results ---`);
-        console.log(`Found ${documentsMap.size} variant documents in Strapi:`);
-        
-        // Show what was found
-        documentsMap.forEach((doc, slug) => {
-          console.log(`  - Slug: "${slug}" -> Document ID: ${doc?.id}, Document:`, doc);
-        });
-
         // Extract IDs from found documents
         documentsMap.forEach((doc, slug) => {
           if (doc?.id) {
             variantDocumentIds.push(doc.id.toString());
-            console.log(`  ✓ Added document ID: ${doc.id} for slug: "${slug}"`);
-          } else {
-            console.log(`  ✗ No ID found for slug: "${slug}"`);
           }
         });
-
-        console.log(`\nFinal variant document IDs array: [${variantDocumentIds.join(', ')}]`);
       }
     }
 
@@ -1029,14 +931,6 @@ export class StrapiService {
       slug: slug,
       productVariants: variantDocumentIds,
     };
-
-    console.log(`\n=== FINAL COLLECTION DATA TO BE SENT TO STRAPI ===`);
-    console.log(JSON.stringify(result, null, 2));
-    console.log(`Collection: "${result.name}" (ID: ${result.vendureId})`);
-    console.log(`Slug: "${result.slug}"`);
-    console.log(`Product Variant IDs: [${result.productVariants.join(', ')}]`);
-    console.log(`Number of variant relationships: ${result.productVariants.length}`);
-    console.log(`=================================================\n`);
 
     return result;
   }
