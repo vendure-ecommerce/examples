@@ -10,5 +10,26 @@
   "options": {
     "comment": ""
   },
-  "attributes": {}
+  "attributes": {
+    "vendureId": {
+      "type": "integer",
+      "required": true,
+      "unique": true
+    },
+    "name": {
+      "type": "string",
+      "required": true
+    },
+    "slug": {
+      "type": "string",
+      "required": true,
+      "unique": true
+    },
+    "productVariants": {
+      "type": "relation",
+      "relation": "manyToMany",
+      "target": "api::vendure-product-variant.vendure-product-variant",
+      "inversedBy": "collections"
+    }
+  }
 }

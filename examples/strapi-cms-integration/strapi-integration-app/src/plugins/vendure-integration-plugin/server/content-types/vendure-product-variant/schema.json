@@ -8,9 +8,9 @@
   },
   "attributes": {
     "vendureId": {
-      "type": "id",
+      "type": "integer",
       "required": true,
-      "autoPopulate": true
+      "unique": true
     },
     "name": {
       "type": "string",
@@ -18,13 +18,20 @@
     },
     "slug": {
       "type": "string",
-      "required": true
+      "required": true,
+      "unique": true
     },
     "product": {
       "type": "relation",
       "relation": "manyToOne",
       "target": "api::vendure-product.vendure-product",
       "inversedBy": "productVariants"
+    },
+    "collections": {
+      "type": "relation",
+      "relation": "manyToMany",
+      "target": "api::vendure-collection.vendure-collection",
+      "mappedBy": "productVariants"
     }
   }
 }
