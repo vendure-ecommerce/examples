@@ -21,7 +21,8 @@
     "src/plugins/**/ui/*",
     "src/plugins/**/dashboard/*",
     "admin-ui",
-    "vite.*.*ts"
+    "vite.*.*ts",
+    "payload-integration-app"
   ],
   "ts-node": {
     "files": true

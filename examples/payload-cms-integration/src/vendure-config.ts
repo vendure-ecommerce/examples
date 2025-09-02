@@ -118,9 +118,8 @@ export const config: VendureConfig = {
         apiPort: serverPort,
       },
     }),
-    // CmsPlugin.init({
-    //   cmsApiKey: process.env.STORYBLOK_API_KEY,
-    //   storyblokSpaceId: process.env.STORYBLOK_SPACE_ID,
-    // }),
+    CmsPlugin.init({
+      cmsApiKey: process.env.PAYLOAD_API_KEY, // Optional: for authentication if needed
+    }),
   ],
 };

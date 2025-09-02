@@ -18,7 +18,7 @@ import { OnModuleInit } from "@nestjs/common";
 import { CMS_PLUGIN_OPTIONS, loggerCtx } from "./constants";
 import { PluginInitOptions, SyncJobData } from "./types";
 import { CmsSyncService } from "./services/cms-sync.service";
-import { StoryblokService } from "./services/storyblok.service";
+import { PayloadService } from "./services/payload.service";
 import { CmsSyncAdminResolver } from "./api/cms-sync-admin.resolver";
 import { adminApiExtensions } from "./api/api-extensions";
 import { syncCmsTask } from "./config/sync-cms-task";
@@ -28,7 +28,7 @@ import { syncCmsTask } from "./config/sync-cms-task";
   providers: [
     { provide: CMS_PLUGIN_OPTIONS, useFactory: () => CmsPlugin.options },
     CmsSyncService,
-    StoryblokService,
+    PayloadService,
   ],
   configuration: (config) => {
     config.schedulerOptions.tasks.push(syncCmsTask);
@@ -59,8 +59,15 @@ export class CmsPlugin implements OnModuleInit {
     this.productSyncQueue = await this.jobQueueService.createQueue({
       name: "cms-product-sync",
       process: async (job) => {
-        const result = await this.cmsSyncService.syncProductToCms(job.data);
-        return result;
+        console.log(`[CmsPlugin] Processing product sync job:`, JSON.stringify(job.data, null, 2));
+        try {
+          const result = await this.cmsSyncService.syncProductToCms(job.data);
+          console.log(`[CmsPlugin] Product sync job completed successfully:`, JSON.stringify(result, null, 2));
+          return result;
+        } catch (error) {
+          console.log(`[CmsPlugin] Product sync job failed:`, error);
+          throw error;
+        }
       },
     });
 
@@ -85,18 +92,31 @@ export class CmsPlugin implements OnModuleInit {
     // Listen for Product events
     this.eventBus.ofType(ProductEvent).subscribe(async (event) => {
       try {
+        console.log(`[CmsPlugin] ProductEvent received - Type: ${event.type}, Product ID: ${event.entity.id}`);
+        console.log(`[CmsPlugin] ProductEvent entity:`, {
+          id: event.entity.id,
+          enabled: event.entity.enabled,
+          createdAt: event.entity.createdAt,
+          updatedAt: event.entity.updatedAt,
+          translations: event.entity.translations?.map(t => ({ id: t.id, languageCode: t.languageCode, name: t.name, slug: t.slug }))
+        });
+        
         const syncData = this.extractSyncData(event);
+        console.log(`[CmsPlugin] Extracted sync data:`, JSON.stringify(syncData, null, 2));
 
         Logger.info(
           `[${loggerCtx}] Product event detected: ${event.type} for product ${event.entity.id}`,
         );
 
+        console.log(`[CmsPlugin] Adding job to productSyncQueue`);
         await this.productSyncQueue.add(syncData);
+        console.log(`[CmsPlugin] Job successfully added to productSyncQueue`);
 
         Logger.info(
           `[${loggerCtx}] Product sync job queued for product ${event.entity.id}`,
         );
       } catch (error) {
+        console.log(`[CmsPlugin] ERROR in ProductEvent handler:`, error);
         Logger.error(
           `[${loggerCtx}] Failed to queue product sync job: ${error instanceof Error ? error.message : "Unknown error"}`,
           error instanceof Error ? error.stack : "",

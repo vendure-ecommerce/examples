@@ -11,20 +11,19 @@ import {
 import { CMS_PLUGIN_OPTIONS } from "../constants";
 import { OperationType, PluginInitOptions } from "../types";
 import { TranslationUtils } from "../utils/translation.utils";
-const COMPONENT_TYPE = {
-  product: "vendure_product",
-  product_variant: "vendure_product_variant",
-  collection: "vendure_collection",
+const COLLECTION_SLUG = {
+  product: "vendure-product",
+  product_variant: "vendure-product-variant",
+  collection: "vendure-collection",
 };
 
 @Injectable()
 export class PayloadService {
-  private readonly storyblokBaseUrl = "https://mapi.storyblok.com/v1";
-  private readonly componentsPath = "components";
-  private isInitialized = false;
+  private readonly payloadBaseUrl = "http://localhost:3001/api";
+  private isInitialized = true; // Payload doesn't need initialization like Storyblok
   private readonly translationUtils = new TranslationUtils();
   private lastApiCallTime = 0;
-  private readonly rateLimitDelay = 200; // 200ms between calls = max 5 calls/second
+  private readonly rateLimitDelay = 100; // 100ms between calls for local API
 
   constructor(
     private connection: TransactionalConnection,
@@ -44,45 +43,53 @@ export class PayloadService {
     productSlug?: string | null;
   }) {
     try {
+      console.log(`[PayloadService] Starting syncProduct - ID: ${product.id}, Operation: ${operationType}, ProductSlug: ${productSlug}`);
+      
       this.translationUtils.validateTranslations(
         product.translations,
         defaultLanguageCode,
       );
 
       Logger.info(
-        `Syncing product ${product.id} (${operationType}) to Storyblok`,
+        `Syncing product ${product.id} (${operationType}) to Payload`,
       );
 
+      console.log(`[PayloadService] About to execute ${operationType} operation for product ${product.id}`);
+      
       switch (operationType) {
         case "create":
-          await this.createStoryFromProduct(
+          console.log(`[PayloadService] Calling createDocumentFromProduct for product ${product.id}`);
+          await this.createDocumentFromProduct(
             product,
             defaultLanguageCode,
             productSlug,
           );
           break;
         case "update":
-          await this.updateStoryFromProduct(
+          console.log(`[PayloadService] Calling updateDocumentFromProduct for product ${product.id}`);
+          await this.updateDocumentFromProduct(
             product,
             defaultLanguageCode,
             productSlug,
           );
           break;
         case "delete":
-          await this.deleteStoryFromProduct(product, defaultLanguageCode);
+          console.log(`[PayloadService] Calling deleteDocumentFromProduct for product ${product.id}`);
+          await this.deleteDocumentFromProduct(product, defaultLanguageCode);
           break;
         default:
+          console.log(`[PayloadService] Unknown operation type: ${operationType}`);
           Logger.error(`Unknown operation type: ${operationType}`);
       }
 
       Logger.info(
-        `Successfully synced product ${product.id} (${operationType}) to Storyblok`,
+        `Successfully synced product ${product.id} (${operationType}) to Payload`,
       );
     } catch (error) {
       const errorMessage =
         error instanceof Error ? error.message : "Unknown error";
       Logger.error(
-        `Failed to sync product ${product.id} (${operationType}) to Storyblok: ${errorMessage}`,
+        `Failed to sync product ${product.id} (${operationType}) to Payload: ${errorMessage}`,
       );
       throw error;
     }
@@ -108,12 +115,12 @@ export class PayloadService {
       );
 
       Logger.info(
-        `Syncing product variant ${variant.id} (${operationType}) to Storyblok`,
+        `Syncing product variant ${variant.id} (${operationType}) to Payload`,
       );
 
       switch (operationType) {
         case "create":
-          await this.createStoryFromVariant(
+          await this.createDocumentFromVariant(
             variant,
             defaultLanguageCode,
             variantSlug,
@@ -121,7 +128,7 @@ export class PayloadService {
           );
           break;
         case "update":
-          await this.updateStoryFromVariant(
+          await this.updateDocumentFromVariant(
             variant,
             defaultLanguageCode,
             variantSlug,
@@ -129,7 +136,7 @@ export class PayloadService {
           );
           break;
         case "delete":
-          await this.deleteStoryFromVariant(
+          await this.deleteDocumentFromVariant(
             variant,
             defaultLanguageCode,
             variantSlug,
@@ -140,13 +147,13 @@ export class PayloadService {
       }
 
       Logger.info(
-        `Successfully synced product variant ${variant.id} (${operationType}) to Storyblok`,
+        `Successfully synced product variant ${variant.id} (${operationType}) to Payload`,
       );
     } catch (error) {
       const errorMessage =
         error instanceof Error ? error.message : "Unknown error";
       Logger.error(
-        `Failed to sync product variant ${variant.id} (${operationType}) to Storyblok: ${errorMessage}`,
+        `Failed to sync product variant ${variant.id} (${operationType}) to Payload: ${errorMessage}`,
       );
       throw error;
     }
@@ -172,12 +179,12 @@ export class PayloadService {
       );
 
       Logger.info(
-        `Syncing collection ${collection.id} (${operationType}) to Storyblok`,
+        `Syncing collection ${collection.id} (${operationType}) to Payload`,
       );
 
       switch (operationType) {
         case "create":
-          await this.createStoryFromCollection(
+          await this.createDocumentFromCollection(
             collection,
             defaultLanguageCode,
             collectionSlug,
@@ -185,7 +192,7 @@ export class PayloadService {
           );
           break;
         case "update":
-          await this.updateStoryFromCollection(
+          await this.updateDocumentFromCollection(
             collection,
             defaultLanguageCode,
             collectionSlug,
@@ -193,76 +200,79 @@ export class PayloadService {
           );
           break;
         case "delete":
-          await this.deleteStoryFromCollection(collection, defaultLanguageCode);
+          await this.deleteDocumentFromCollection(collection, defaultLanguageCode);
           break;
         default:
           Logger.error(`Unknown operation type: ${operationType}`);
       }
 
       Logger.info(
-        `Successfully synced collection ${collection.id} (${operationType}) to Storyblok`,
+        `Successfully synced collection ${collection.id} (${operationType}) to Payload`,
       );
     } catch (error) {
       const errorMessage =
         error instanceof Error ? error.message : "Unknown error";
       Logger.error(
-        `Failed to sync collection ${collection.id} (${operationType}) to Storyblok: ${errorMessage}`,
+        `Failed to sync collection ${collection.id} (${operationType}) to Payload: ${errorMessage}`,
       );
       throw error;
     }
   }
 
   /**
-   * Finds a Storyblok story by slug
+   * Finds a Payload document by slug in a specific collection
+   * @param collectionSlug The collection to search in
    * @param slug The slug to search for
-   * @returns The story object or null if not found
+   * @returns The document object or null if not found
    */
-  private async findStoryBySlug(slug: string): Promise<any> {
+  private async findDocumentBySlug(collectionSlug: string, slug: string): Promise<any> {
     try {
-      const response = await this.makeStoryblokRequest({
+      const response = await this.makePayloadRequest({
         method: "GET",
-        endpoint: `stories?by_slugs=${slug}`,
+        endpoint: `${collectionSlug}?where[slug][equals]=${encodeURIComponent(slug)}&limit=1`,
       });
 
-      return response.stories.find((story: any) => story.slug === slug);
+      return response.docs && response.docs.length > 0 ? response.docs[0] : null;
     } catch (error) {
-      Logger.error(`Failed to find story by slug: ${slug}`, String(error));
+      Logger.error(`Failed to find document by slug: ${slug}`, String(error));
+      return null;
     }
   }
 
   /**
-   * Finds multiple Storyblok stories by slugs in a single API call
+   * Finds multiple Payload documents by slugs across collections
+   * @param collectionSlug The collection to search in
    * @param slugs Array of slugs to search for
-   * @returns Map of slug to story object
+   * @returns Map of slug to document object
    */
-  private async findStoriesBySlugs(slugs: string[]): Promise<Map<string, any>> {
-    const storyMap = new Map<string, any>();
+  private async findDocumentsBySlugs(collectionSlug: string, slugs: string[]): Promise<Map<string, any>> {
+    const documentMap = new Map<string, any>();
 
     if (slugs.length === 0) {
-      return storyMap;
+      return documentMap;
     }
 
     try {
-      // Storyblok supports comma-separated slugs in the by_slugs parameter
-      const slugsParam = slugs.join(",");
-      const response = await this.makeStoryblokRequest({
+      // Payload supports "in" operator for multiple values
+      const slugsParam = slugs.map(slug => encodeURIComponent(slug)).join(',');
+      const response = await this.makePayloadRequest({
         method: "GET",
-        endpoint: `stories?by_slugs=${slugsParam}`,
+        endpoint: `${collectionSlug}?where[slug][in]=${slugsParam}`,
       });
 
-      if (response.stories) {
-        for (const story of response.stories) {
-          storyMap.set(story.slug, story);
+      if (response.docs) {
+        for (const doc of response.docs) {
+          documentMap.set(doc.slug, doc);
         }
       }
     } catch (error) {
       Logger.error(
-        `Failed to find stories by slugs: ${slugs.join(", ")}`,
+        `Failed to find documents by slugs: ${slugs.join(", ")}`,
         String(error),
       );
     }
 
-    return storyMap;
+    return documentMap;
   }
 
   /**
@@ -293,12 +303,12 @@ export class PayloadService {
   }
 
   /**
-   * Finds all Storyblok stories that represent variants of a product
+   * Finds all Payload documents that represent variants of a product
    * @param productId The Vendure product ID
    * @param defaultLanguageCode The default language code to use for slug lookup
-   * @returns Array of Storyblok story IDs
+   * @returns Array of Payload document IDs
    */
-  private async findVariantStoriesForProductUuids(
+  private async findVariantDocumentsForProductIds(
     productId: string | number,
     defaultLanguageCode: LanguageCode,
     productSlug?: string | null,
@@ -318,26 +328,26 @@ export class PayloadService {
       return [];
     }
 
-    // Batch lookup all variant stories at once
-    const storiesMap = await this.findStoriesBySlugs(variantSlugs);
+    // Batch lookup all variant documents at once
+    const documentsMap = await this.findDocumentsBySlugs(COLLECTION_SLUG.product_variant, variantSlugs);
 
-    const storyIds: string[] = [];
-    for (const [slug, story] of storiesMap) {
-      if (story?.uuid) {
-        storyIds.push(story.uuid.toString());
+    const documentIds: string[] = [];
+    documentsMap.forEach((doc, slug) => {
+      if (doc?.id) {
+        documentIds.push(doc.id.toString());
       }
-    }
+    });
 
-    return storyIds;
+    return documentIds;
   }
 
   /**
-   * Finds the parent product story for a given variant
+   * Finds the parent product document for a given variant
    * @param variant The ProductVariant entity
    * @param defaultLanguageCode The default language code to use for slug lookup
-   * @returns Storyblok story ID of the parent product or null
+   * @returns Payload document ID of the parent product or null
    */
-  private async findParentProductStoryUuid(
+  private async findParentProductDocumentId(
     variant: ProductVariant,
     defaultLanguageCode: LanguageCode,
   ): Promise<string | null> {
@@ -359,8 +369,8 @@ export class PayloadService {
       );
 
       if (slug) {
-        const story = await this.findStoryBySlug(slug);
-        return story?.uuid?.toString() || null;
+        const document = await this.findDocumentBySlug(COLLECTION_SLUG.product, slug);
+        return document?.id?.toString() || null;
       }
 
       return null;
@@ -373,7 +383,7 @@ export class PayloadService {
     }
   }
 
-  private async createStoryFromProduct(
+  private async createDocumentFromProduct(
     product: Product,
     defaultLanguageCode: LanguageCode,
     productSlug?: string | null,
@@ -385,72 +395,86 @@ export class PayloadService {
     );
     if (!data) {
       Logger.error(
-        `Cannot create story: no valid translation data for product ${product.id}`,
+        `Cannot create document: no valid translation data for product ${product.id}`,
       );
       return;
     }
 
-    const result = await this.makeStoryblokRequest({
+    const result = await this.makePayloadRequest({
       method: "POST",
-      endpoint: "stories",
+      endpoint: COLLECTION_SLUG.product,
       data,
     });
 
     Logger.info(
-      `Created story for product ${product.id} with Storyblok ID: ${result.story?.id}`,
+      `Created document for product ${product.id} with Payload ID: ${result.doc?.id}`,
     );
   }
 
-  private async updateStoryFromProduct(
+  private async updateDocumentFromProduct(
     product: Product,
     defaultLanguageCode: LanguageCode,
     productSlug?: string | null,
   ): Promise<void> {
+    console.log(`[PayloadService] updateDocumentFromProduct - Starting update for product ${product.id}`);
+    
     const slug = this.translationUtils.getSlugByLanguage(
       product.translations,
       defaultLanguageCode,
     );
+    console.log(`[PayloadService] updateDocumentFromProduct - Found slug: ${slug} for product ${product.id}`);
+    
     if (!slug) {
+      console.log(`[PayloadService] updateDocumentFromProduct - ERROR: No slug found for product ${product.id}`);
       Logger.error(
         `No slug found for product ${product.id} in language ${defaultLanguageCode}`,
       );
       return;
     }
 
-    const existingStory = await this.findStoryBySlug(slug);
+    console.log(`[PayloadService] updateDocumentFromProduct - Looking for existing document with slug: ${slug}`);
+    const existingDocument = await this.findDocumentBySlug(COLLECTION_SLUG.product, slug);
+    console.log(`[PayloadService] updateDocumentFromProduct - Existing document found:`, existingDocument ? `ID: ${existingDocument.id}` : 'null');
 
-    if (!existingStory) {
+    if (!existingDocument) {
+      console.log(`[PayloadService] updateDocumentFromProduct - No existing document found, creating new one`);
       Logger.warn(
-        `Story not found in Storyblok for slug: ${slug}. Creating new story instead.`,
+        `Document not found in Payload for slug: ${slug}. Creating new document instead.`,
       );
-      await this.createStoryFromProduct(product, defaultLanguageCode);
+      await this.createDocumentFromProduct(product, defaultLanguageCode);
       return;
     }
 
+    console.log(`[PayloadService] updateDocumentFromProduct - Transforming product data`);
     const data = await this.transformProductData(
       product,
       defaultLanguageCode,
       productSlug,
     );
+    console.log(`[PayloadService] updateDocumentFromProduct - Transformed data:`, JSON.stringify(data, null, 2));
+    
     if (!data) {
+      console.log(`[PayloadService] updateDocumentFromProduct - ERROR: No data to update`);
       Logger.error(
-        `Cannot update story: no valid translation data for product ${product.id}`,
+        `Cannot update document: no valid translation data for product ${product.id}`,
       );
       return;
     }
 
-    await this.makeStoryblokRequest({
-      method: "PUT",
-      endpoint: `stories/${existingStory.id}`,
+    console.log(`[PayloadService] updateDocumentFromProduct - Making PATCH request to update document ID: ${existingDocument.id}`);
+    await this.makePayloadRequest({
+      method: "PATCH",
+      endpoint: `${COLLECTION_SLUG.product}/${existingDocument.id}`,
       data,
     });
 
+    console.log(`[PayloadService] updateDocumentFromProduct - Successfully updated document for product ${product.id}`);
     Logger.info(
-      `Updated story for product ${product.id} (Storyblok ID: ${existingStory.id})`,
+      `Updated document for product ${product.id} (Payload ID: ${existingDocument.id})`,
     );
   }
 
-  private async deleteStoryFromProduct(
+  private async deleteDocumentFromProduct(
     product: Product,
     defaultLanguageCode: LanguageCode,
   ): Promise<void> {
@@ -460,32 +484,32 @@ export class PayloadService {
     );
     if (!slug) {
       Logger.warn(
-        `No slug found for product ${product.id}, cannot delete story`,
+        `No slug found for product ${product.id}, cannot delete document`,
       );
       return;
     }
 
-    const existingStory = await this.findStoryBySlug(slug);
+    const existingDocument = await this.findDocumentBySlug(COLLECTION_SLUG.product, slug);
 
-    if (!existingStory) {
+    if (!existingDocument) {
       Logger.warn(
-        `Story not found in Storyblok for slug: ${slug}, nothing to delete`,
+        `Document not found in Payload for slug: ${slug}, nothing to delete`,
       );
       return;
     }
 
-    await this.makeStoryblokRequest({
+    await this.makePayloadRequest({
       method: "DELETE",
-      endpoint: `stories/${existingStory.id}`,
+      endpoint: `${COLLECTION_SLUG.product}/${existingDocument.id}`,
     });
 
     Logger.info(
-      `Deleted story for product ${product.id} (Storyblok ID: ${existingStory.id})`,
+      `Deleted document for product ${product.id} (Payload ID: ${existingDocument.id})`,
     );
   }
 
   // Variant-specific CRUD methods
-  private async createStoryFromVariant(
+  private async createDocumentFromVariant(
     variant: ProductVariant,
     defaultLanguageCode: LanguageCode,
     variantSlug: string,
@@ -499,35 +523,35 @@ export class PayloadService {
     );
     if (!data) {
       Logger.error(
-        `Cannot create story: no valid translation data for variant ${variant.id}`,
+        `Cannot create document: no valid translation data for variant ${variant.id}`,
       );
       return;
     }
 
-    const result = await this.makeStoryblokRequest({
+    const result = await this.makePayloadRequest({
       method: "POST",
-      endpoint: "stories",
+      endpoint: COLLECTION_SLUG.product_variant,
       data,
     });
 
     Logger.info(
-      `Created story for variant ${variant.id} with Storyblok ID: ${result.story?.id}`,
+      `Created document for variant ${variant.id} with Payload ID: ${result.doc?.id}`,
     );
   }
 
-  private async updateStoryFromVariant(
+  private async updateDocumentFromVariant(
     variant: ProductVariant,
     defaultLanguageCode: LanguageCode,
     variantSlug: string,
     collections?: Collection[],
   ): Promise<void> {
-    const existingStory = await this.findStoryBySlug(variantSlug);
+    const existingDocument = await this.findDocumentBySlug(COLLECTION_SLUG.product_variant, variantSlug);
 
-    if (!existingStory) {
+    if (!existingDocument) {
       Logger.warn(
-        `Story not found in Storyblok for slug: ${variantSlug}. Creating new story instead.`,
+        `Document not found in Payload for slug: ${variantSlug}. Creating new document instead.`,
       );
-      await this.createStoryFromVariant(
+      await this.createDocumentFromVariant(
         variant,
         defaultLanguageCode,
         variantSlug,
@@ -544,48 +568,48 @@ export class PayloadService {
     );
     if (!data) {
       Logger.error(
-        `Cannot update story: no valid translation data for variant ${variant.id}`,
+        `Cannot update document: no valid translation data for variant ${variant.id}`,
       );
       return;
     }
 
-    await this.makeStoryblokRequest({
-      method: "PUT",
-      endpoint: `stories/${existingStory.id}`,
+    await this.makePayloadRequest({
+      method: "PATCH",
+      endpoint: `${COLLECTION_SLUG.product_variant}/${existingDocument.id}`,
       data,
     });
 
     Logger.info(
-      `Updated story for variant ${variant.id} (Storyblok ID: ${existingStory.id})`,
+      `Updated document for variant ${variant.id} (Payload ID: ${existingDocument.id})`,
     );
   }
 
-  private async deleteStoryFromVariant(
+  private async deleteDocumentFromVariant(
     variant: ProductVariant,
     defaultLanguageCode: LanguageCode,
     variantSlug: string,
   ): Promise<void> {
-    const existingStory = await this.findStoryBySlug(variantSlug);
+    const existingDocument = await this.findDocumentBySlug(COLLECTION_SLUG.product_variant, variantSlug);
 
-    if (!existingStory) {
+    if (!existingDocument) {
       Logger.warn(
-        `Story not found in Storyblok for slug: ${variantSlug}, nothing to delete`,
+        `Document not found in Payload for slug: ${variantSlug}, nothing to delete`,
       );
       return;
     }
 
-    await this.makeStoryblokRequest({
+    await this.makePayloadRequest({
       method: "DELETE",
-      endpoint: `stories/${existingStory.id}`,
+      endpoint: `${COLLECTION_SLUG.product_variant}/${existingDocument.id}`,
     });
 
     Logger.info(
-      `Deleted story for variant ${variant.id} (Storyblok ID: ${existingStory.id})`,
+      `Deleted document for variant ${variant.id} (Payload ID: ${existingDocument.id})`,
     );
   }
 
   // Collection-specific CRUD methods
-  private async createStoryFromCollection(
+  private async createDocumentFromCollection(
     collection: Collection,
     defaultLanguageCode: LanguageCode,
     collectionSlug?: string | null,
@@ -599,23 +623,23 @@ export class PayloadService {
     );
     if (!data) {
       Logger.error(
-        `Cannot create story: no valid translation data for collection ${collection.id}`,
+        `Cannot create document: no valid translation data for collection ${collection.id}`,
       );
       return;
     }
 
-    const result = await this.makeStoryblokRequest({
+    const result = await this.makePayloadRequest({
       method: "POST",
-      endpoint: "stories",
+      endpoint: COLLECTION_SLUG.collection,
       data,
     });
 
     Logger.info(
-      `Created story for collection ${collection.id} with Storyblok ID: ${result.story?.id}`,
+      `Created document for collection ${collection.id} with Payload ID: ${result.doc?.id}`,
     );
   }
 
-  private async updateStoryFromCollection(
+  private async updateDocumentFromCollection(
     collection: Collection,
     defaultLanguageCode: LanguageCode,
     collectionSlug?: string | null,
@@ -632,13 +656,13 @@ export class PayloadService {
       return;
     }
 
-    const existingStory = await this.findStoryBySlug(slug);
+    const existingDocument = await this.findDocumentBySlug(COLLECTION_SLUG.collection, slug);
 
-    if (!existingStory) {
+    if (!existingDocument) {
       Logger.warn(
-        `Story not found in Storyblok for slug: ${slug}. Creating new story instead.`,
+        `Document not found in Payload for slug: ${slug}. Creating new document instead.`,
       );
-      await this.createStoryFromCollection(
+      await this.createDocumentFromCollection(
         collection,
         defaultLanguageCode,
         collectionSlug,
@@ -655,23 +679,23 @@ export class PayloadService {
     );
     if (!data) {
       Logger.error(
-        `Cannot update story: no valid translation data for collection ${collection.id}`,
+        `Cannot update document: no valid translation data for collection ${collection.id}`,
       );
       return;
     }
 
-    await this.makeStoryblokRequest({
-      method: "PUT",
-      endpoint: `stories/${existingStory.id}`,
+    await this.makePayloadRequest({
+      method: "PATCH",
+      endpoint: `${COLLECTION_SLUG.collection}/${existingDocument.id}`,
       data,
     });
 
     Logger.info(
-      `Updated story for collection ${collection.id} (Storyblok ID: ${existingStory.id})`,
+      `Updated document for collection ${collection.id} (Payload ID: ${existingDocument.id})`,
     );
   }
 
-  private async deleteStoryFromCollection(
+  private async deleteDocumentFromCollection(
     collection: Collection,
     defaultLanguageCode: LanguageCode,
   ): Promise<void> {
@@ -681,27 +705,27 @@ export class PayloadService {
     );
     if (!slug) {
       Logger.warn(
-        `No slug found for collection ${collection.id}, cannot delete story`,
+        `No slug found for collection ${collection.id}, cannot delete document`,
       );
       return;
     }
 
-    const existingStory = await this.findStoryBySlug(slug);
+    const existingDocument = await this.findDocumentBySlug(COLLECTION_SLUG.collection, slug);
 
-    if (!existingStory) {
+    if (!existingDocument) {
       Logger.warn(
-        `Story not found in Storyblok for slug: ${slug}, nothing to delete`,
+        `Document not found in Payload for slug: ${slug}, nothing to delete`,
       );
       return;
     }
 
-    await this.makeStoryblokRequest({
+    await this.makePayloadRequest({
       method: "DELETE",
-      endpoint: `stories/${existingStory.id}`,
+      endpoint: `${COLLECTION_SLUG.collection}/${existingDocument.id}`,
     });
 
     Logger.info(
-      `Deleted story for collection ${collection.id} (Storyblok ID: ${existingStory.id})`,
+      `Deleted document for collection ${collection.id} (Payload ID: ${existingDocument.id})`,
     );
   }
 
@@ -723,14 +747,14 @@ export class PayloadService {
       return undefined;
     }
 
-    // Find parent product story for this variant
-    const parentProductStoryUuid = await this.findParentProductStoryUuid(
+    // Find parent product document for this variant
+    const parentProductDocumentId = await this.findParentProductDocumentId(
       variant,
       defaultLanguageCode,
     );
 
-    // Transform collections to story UUIDs
-    const collectionStoryUuids: string[] = [];
+    // Transform collections to document IDs
+    const collectionDocumentIds: string[] = [];
     if (collections && collections.length > 0) {
       // Collect all collection slugs for batch lookup
       const collectionSlugs: string[] = [];
@@ -744,31 +768,25 @@ export class PayloadService {
         }
       }
 
-      // Batch lookup all collection stories at once
+      // Batch lookup all collection documents at once
       if (collectionSlugs.length > 0) {
-        const storiesMap = await this.findStoriesBySlugs(collectionSlugs);
+        const documentsMap = await this.findDocumentsBySlugs(COLLECTION_SLUG.collection, collectionSlugs);
 
-        // Extract UUIDs from found stories
-        for (const [slug, story] of storiesMap) {
-          if (story?.uuid) {
-            collectionStoryUuids.push(story.uuid.toString());
+        // Extract IDs from found documents
+        documentsMap.forEach((doc, slug) => {
+          if (doc?.id) {
+            collectionDocumentIds.push(doc.id.toString());
           }
-        }
+        });
       }
     }
 
     const result = {
-      story: {
-        name: defaultTranslation?.name,
-        slug: variantSlug,
-        content: {
-          component: COMPONENT_TYPE.product_variant,
-          vendureId: variant.id.toString(),
-          parentProduct: parentProductStoryUuid ? [parentProductStoryUuid] : [],
-          collections: collectionStoryUuids,
-        },
-      } as any,
-      publish: 1,
+      id: variant.id,
+      name: defaultTranslation?.name,
+      slug: variantSlug,
+      product: parentProductDocumentId || null,
+      collections: collectionDocumentIds,
     };
 
     return result;
@@ -791,8 +809,8 @@ export class PayloadService {
       return undefined;
     }
 
-    // Find all variant stories for this product
-    const variantStoryIds = await this.findVariantStoriesForProductUuids(
+    // Find all variant documents for this product
+    const variantDocumentIds = await this.findVariantDocumentsForProductIds(
       product.id,
       defaultLanguageCode,
       productSlug,
@@ -804,16 +822,10 @@ export class PayloadService {
     );
 
     const result = {
-      story: {
-        name: defaultTranslation?.name,
-        slug: slug,
-        content: {
-          component: COMPONENT_TYPE.product,
-          vendureId: product.id.toString(),
-          variants: variantStoryIds,
-        },
-      } as any,
-      publish: 1,
+      id: product.id,
+      name: defaultTranslation?.name,
+      slug: slug,
+      productVariants: variantDocumentIds,
     };
 
     return result;
@@ -842,8 +854,8 @@ export class PayloadService {
       defaultLanguageCode,
     );
 
-    // Transform variants to story UUIDs
-    const variantStoryUuids: string[] = [];
+    // Transform variants to document IDs
+    const variantDocumentIds: string[] = [];
     if (variants && variants.length > 0) {
       // First, collect all variant slugs we need to look up
       const variantSlugs: string[] = [];
@@ -862,63 +874,73 @@ export class PayloadService {
         }
       }
 
-      // Batch lookup all variant stories at once
+      // Batch lookup all variant documents at once
       if (variantSlugs.length > 0) {
-        const storiesMap = await this.findStoriesBySlugs(variantSlugs);
+        const documentsMap = await this.findDocumentsBySlugs(COLLECTION_SLUG.product_variant, variantSlugs);
 
-        // Extract UUIDs from found stories
-        for (const [slug, story] of storiesMap) {
-          if (story?.uuid) {
-            variantStoryUuids.push(story.uuid.toString());
+        // Extract IDs from found documents
+        documentsMap.forEach((doc, slug) => {
+          if (doc?.id) {
+            variantDocumentIds.push(doc.id.toString());
           }
-        }
+        });
       }
     }
 
     const result = {
-      story: {
-        name: defaultTranslation?.name,
-        slug: slug,
-        content: {
-          component: COMPONENT_TYPE.collection,
-          vendureId: collection.id.toString(),
-          variants: variantStoryUuids,
-        },
-      } as any,
-      publish: 1,
+      id: collection.id,
+      name: defaultTranslation?.name,
+      slug: slug,
+      productVariants: variantDocumentIds,
     };
 
     return result;
   }
 
-  private async checkContentTypes() {
-    //  curl -H "Authorization: QtQtXHU2tFjkk7P1peAblAtt-70271483895739-r3UgJzCHEfz3C9hxJVWD" 'https://mapi.storyblok.com/v1/spaces/286724947198305/components?search=Vendure' | jq
-    const response = await this.makeStoryblokRequest({
-      method: "GET",
-      endpoint: `${this.componentsPath}?search=vendure`,
-      skipInitializationCheck: true,
-    });
+  private async checkPayloadCollections() {
+    try {
+      // Check if Payload collections exist by attempting to query each one
+      const collections = [COLLECTION_SLUG.product, COLLECTION_SLUG.product_variant, COLLECTION_SLUG.collection];
+      const results: Record<string, boolean> = {};
 
-    const checkIfExists = (name: string) => {
-      return response.components.findIndex((c: any) => c.name === name) !== -1;
-    };
+      for (const collection of collections) {
+        try {
+          await this.makePayloadRequest({
+            method: "GET",
+            endpoint: `${collection}?limit=1`,
+          });
+          results[collection] = true;
+        } catch (error) {
+          results[collection] = false;
+        }
+      }
 
-    return {
-      product: checkIfExists(COMPONENT_TYPE.product),
-      variant: checkIfExists(COMPONENT_TYPE.product_variant),
-      collection: checkIfExists(COMPONENT_TYPE.collection),
-    };
+      return {
+        product: results[COLLECTION_SLUG.product],
+        variant: results[COLLECTION_SLUG.product_variant],
+        collection: results[COLLECTION_SLUG.collection],
+      };
+    } catch (error) {
+      Logger.error("Failed to check Payload collections", String(error));
+      return {
+        product: false,
+        variant: false,
+        collection: false,
+      };
+    }
   }
 
-  private getStoryblokHeaders(): Record<string, string> {
-    if (!this.options.cmsApiKey) {
-      Logger.error("Storyblok API key is not configured");
-    }
-
-    return {
-      Authorization: this.options.cmsApiKey as string,
+  private getPayloadHeaders(): Record<string, string> {
+    const headers: Record<string, string> = {
       "Content-Type": "application/json",
     };
+
+    // Add authorization header if API key is configured
+    if (this.options.cmsApiKey) {
+      headers.Authorization = `Bearer ${this.options.cmsApiKey}`;
+    }
+
+    return headers;
   }
 
   private async enforceRateLimit(): Promise<void> {
@@ -932,65 +954,54 @@ export class PayloadService {
 
     this.lastApiCallTime = Date.now();
   }
-  private async makeStoryblokRequest({
+  private async makePayloadRequest({
     method,
     endpoint,
     data,
-    skipInitializationCheck = false,
   }: {
-    method: "GET" | "POST" | "PUT" | "DELETE";
+    method: "GET" | "POST" | "PATCH" | "DELETE";
     endpoint: string;
     data?: any;
-    skipInitializationCheck?: boolean;
   }): Promise<any> {
-    const url = `${this.storyblokBaseUrl}/spaces/${this.options.storyblokSpaceId}/${endpoint}`;
+    const url = `${this.payloadBaseUrl}/${endpoint}`;
+    console.log(`[PayloadService] makePayloadRequest - ${method} ${url}`);
+    
     const config: RequestInit = {
       method,
-      headers: this.getStoryblokHeaders(),
+      headers: this.getPayloadHeaders(),
     };
 
-    if (data && (method === "POST" || method === "PUT")) {
+    if (data && (method === "POST" || method === "PATCH")) {
       config.body = JSON.stringify(data);
+      console.log(`[PayloadService] makePayloadRequest - Request body:`, JSON.stringify(data, null, 2));
     }
 
-    // In the case the content types have not yet been initialized this code will wait until it is
-    // and includes an exponential back off strategy
-    if (!skipInitializationCheck) {
-      let attempts = 0;
-      const maxAttempts = 100;
-      while (!this.isInitialized && attempts < maxAttempts) {
-        await new Promise((res) =>
-          setTimeout(
-            res,
-            Math.min(10 + 1.03 ** (attempts + 1) * attempts * 0.5, 30000),
-          ),
-        );
-        attempts++;
-        if (attempts === maxAttempts - 1) {
-          Logger.error(
-            "Reached max attempts while waiting for Storyblok content types initialization",
-          );
-        }
-      }
-    }
+    console.log(`[PayloadService] makePayloadRequest - Headers:`, config.headers);
 
     // Enforce rate limiting before making the request
     await this.enforceRateLimit();
 
-    Logger.debug(`Making Storyblok API request: ${method} ${url}`);
+    Logger.debug(`Making Payload API request: ${method} ${url}`);
+    console.log(`[PayloadService] makePayloadRequest - About to send request`);
+    
     const response = await fetch(url, config);
+    console.log(`[PayloadService] makePayloadRequest - Response status: ${response.status} ${response.statusText}`);
 
     if (!response.ok) {
       const errorText = await response.text();
-      const errorMessage = `Storyblok API error: ${response.status} ${response.statusText} - ${errorText}`;
+      const errorMessage = `Payload API error: ${response.status} ${response.statusText} - ${errorText}`;
+      console.log(`[PayloadService] makePayloadRequest - ERROR: ${errorMessage}`);
       Logger.error(errorMessage);
       throw new Error(errorMessage);
     }
 
     if (method === "DELETE") {
+      console.log(`[PayloadService] makePayloadRequest - DELETE successful, returning empty object`);
       return {}; // DELETE requests typically don't return content
     }
 
-    return await response.json();
+    const responseData = await response.json();
+    console.log(`[PayloadService] makePayloadRequest - Response data:`, JSON.stringify(responseData, null, 2));
+    return responseData;
   }
 }
