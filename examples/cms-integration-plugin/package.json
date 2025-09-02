@@ -1,5 +1,5 @@
 {
-  "name": "cms-integration-shop",
+  "name": "cms-integration-plugin-shop",
   "version": "0.1.0",
   "private": true,
   "scripts": {

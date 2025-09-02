@@ -1,5 +1,5 @@
 {
-  "name": "contentful-cms-integration-shop",
+  "name": "payload-cms-integration-shop",
   "version": "0.1.0",
   "private": true,
   "scripts": {
@@ -29,9 +29,14 @@
     "@nestjs/testing": "^11.1.6",
     "@vendure/cli": "3.4.1",
     "@vendure/testing": "3.4.1",
+    "@vitest/ui": "^2.1.2",
     "concurrently": "9.2.1",
     "typescript": "5.8.2",
-    "vitest": "^2.1.2",
-    "@vitest/ui": "^2.1.2"
+    "vitest": "^2.1.2"
+  },
+  "overrides": {
+    "@vendure/dashboard": {
+      "@vendure/core": "3.4.1"
+    }
   }
 }
