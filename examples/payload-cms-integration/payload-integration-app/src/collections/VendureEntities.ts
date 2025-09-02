@@ -4,6 +4,9 @@ export const VendureProduct: CollectionConfig = {
   slug: 'vendure-product',
   access: {
     read: () => true,
+    create: () => true,
+    update: () => true,
+    delete: () => true,
   },
   fields: [
     {
@@ -35,6 +38,9 @@ export const VendureProductVariant: CollectionConfig = {
   slug: 'vendure-product-variant',
   access: {
     read: () => true,
+    create: () => true,
+    update: () => true,
+    delete: () => true,
   },
   fields: [
     {
@@ -72,6 +78,9 @@ export const VendureCollection: CollectionConfig = {
   slug: 'vendure-collection',
   access: {
     read: () => true,
+    create: () => true,
+    update: () => true,
+    delete: () => true,
   },
   fields: [
     {
