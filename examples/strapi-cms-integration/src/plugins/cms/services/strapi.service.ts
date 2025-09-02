@@ -23,7 +23,7 @@ export class StrapiService {
   private isInitialized = true; // Strapi doesn't need initialization like Storyblok
   private readonly translationUtils = new TranslationUtils();
   private lastApiCallTime = 0;
-  private readonly rateLimitDelay = 100; // 100ms between calls for local API
+  private readonly rateLimitDelay = 5; // 100ms between calls for local API
 
   constructor(
     private connection: TransactionalConnection,
@@ -48,9 +48,7 @@ export class StrapiService {
         defaultLanguageCode,
       );
 
-      Logger.info(
-        `Syncing product ${product.id} (${operationType}) to Strapi`,
-      );
+      Logger.info(`Syncing product ${product.id} (${operationType}) to Strapi`);
 
       switch (operationType) {
         case "create":
@@ -192,7 +190,10 @@ export class StrapiService {
           );
           break;
         case "delete":
-          await this.deleteDocumentFromCollection(collection, defaultLanguageCode);
+          await this.deleteDocumentFromCollection(
+            collection,
+            defaultLanguageCode,
+          );
           break;
         default:
           Logger.error(`Unknown operation type: ${operationType}`);
@@ -217,17 +218,21 @@ export class StrapiService {
    * @param slug The slug to search for
    * @returns The document object or null if not found
    */
-  private async findDocumentBySlug(collectionSlug: string, slug: string): Promise<any> {
+  private async findDocumentBySlug(
+    collectionSlug: string,
+    slug: string,
+  ): Promise<any> {
     try {
       const endpoint = `${collectionSlug}?filters[slug][\$eq]=${encodeURIComponent(slug)}&pagination[limit]=1`;
-      
+
       const response = await this.makeStrapiRequest({
         method: "GET",
         endpoint,
       });
 
-      const result = response.data && response.data.length > 0 ? response.data[0] : null;
-      
+      const result =
+        response.data && response.data.length > 0 ? response.data[0] : null;
+
       return result;
     } catch (error) {
       Logger.error(`Failed to find document by slug: ${slug}`, String(error));
@@ -241,7 +246,10 @@ export class StrapiService {
    * @param slugs Array of slugs to search for
    * @returns Map of slug to document object
    */
-  private async findDocumentsBySlugs(collectionSlug: string, slugs: string[]): Promise<Map<string, any>> {
+  private async findDocumentsBySlugs(
+    collectionSlug: string,
+    slugs: string[],
+  ): Promise<Map<string, any>> {
     const documentMap = new Map<string, any>();
 
     if (slugs.length === 0) {
@@ -249,22 +257,65 @@ export class StrapiService {
     }
 
     try {
-      // Strapi supports "$in" operator for multiple values
-      const slugsParam = slugs.map(slug => encodeURIComponent(slug)).join(',');
-      const endpoint = `${collectionSlug}?filters[slug][\$in]=${slugsParam}`;
+      // Strapi v5 requires array indices for $in filters
+      const queryParams = slugs
+        .map((slug, index) => `filters[slug][\$in][${index}]=${encodeURIComponent(slug)}`)
+        .join('&');
+      const endpoint = `${collectionSlug}?${queryParams}`;
       
+      console.log(`\n🔍 STRAPI API REQUEST DEBUG:`);
+      console.log(`Collection: ${collectionSlug}`);
+      console.log(`Endpoint: ${endpoint}`);
+      console.log(`Full URL: ${this.strapiBaseUrl}/${endpoint}`);
+      console.log(`Slugs being searched:`, slugs);
+      console.log(`Query params: ${queryParams}`);
+
       const response = await this.makeStrapiRequest({
         method: "GET",
         endpoint,
       });
+      
+      console.log(`\n📥 STRAPI API RESPONSE:`);
+      console.log(`Status: Success`);
+      console.log(`Response type:`, typeof response);
+      console.log(`Response keys:`, Object.keys(response || {}));
+      console.log(`Response.data type:`, typeof response?.data);
+      console.log(`Response.data length:`, response?.data?.length || 'N/A');
+      console.log(`Full response:`, JSON.stringify(response, null, 2));
 
       if (response.data) {
-        for (const doc of response.data) {
-          documentMap.set(doc.slug, doc);
+        console.log(`\n📋 PROCESSING DOCUMENTS:`);
+        for (let i = 0; i < response.data.length; i++) {
+          const doc = response.data[i];
+          console.log(`Document ${i + 1}:`);
+          console.log(`  - ID: ${doc?.id}`);
+          console.log(`  - Document ID: ${doc?.documentId}`);
+          console.log(`  - Slug: ${doc?.slug}`);
+          console.log(`  - Full doc:`, JSON.stringify(doc, null, 2));
+          
+          if (doc?.slug) {
+            documentMap.set(doc.slug, doc);
+            console.log(`  ✅ Added to map with key: "${doc.slug}"`);
+          } else {
+            console.log(`  ❌ No slug found, skipping`);
+          }
         }
+      } else {
+        console.log(`❌ No response.data found`);
       }
       
+      console.log(`\n🗂️ FINAL DOCUMENT MAP:`);
+      console.log(`Map size: ${documentMap.size}`);
+      documentMap.forEach((doc, slug) => {
+        console.log(`  "${slug}" -> ID: ${doc?.id}`);
+      });
+      
     } catch (error) {
+      console.log(`\n💥 STRAPI API ERROR:`);
+      console.log(`Error type:`, typeof error);
+      console.log(`Error message:`, error instanceof Error ? error.message : String(error));
+      console.log(`Full error:`, error);
+      
       Logger.error(
         `Failed to find documents by slugs: ${slugs.join(", ")}`,
         String(error),
@@ -328,7 +379,10 @@ export class StrapiService {
     }
 
     // Batch lookup all variant documents at once
-    const documentsMap = await this.findDocumentsBySlugs(COLLECTION_SLUG.product_variant, variantSlugs);
+    const documentsMap = await this.findDocumentsBySlugs(
+      COLLECTION_SLUG.product_variant,
+      variantSlugs,
+    );
 
     const documentIds: string[] = [];
     documentsMap.forEach((doc, slug) => {
@@ -368,7 +422,10 @@ export class StrapiService {
       );
 
       if (slug) {
-        const document = await this.findDocumentBySlug(COLLECTION_SLUG.product, slug);
+        const document = await this.findDocumentBySlug(
+          COLLECTION_SLUG.product,
+          slug,
+        );
         return document?.id?.toString() || null;
       }
 
@@ -419,7 +476,7 @@ export class StrapiService {
       product.translations,
       defaultLanguageCode,
     );
-    
+
     if (!slug) {
       Logger.error(
         `No slug found for product ${product.id} in language ${defaultLanguageCode}`,
@@ -427,7 +484,10 @@ export class StrapiService {
       return;
     }
 
-    const existingDocument = await this.findDocumentBySlug(COLLECTION_SLUG.product, slug);
+    const existingDocument = await this.findDocumentBySlug(
+      COLLECTION_SLUG.product,
+      slug,
+    );
 
     if (!existingDocument) {
       Logger.warn(
@@ -442,7 +502,7 @@ export class StrapiService {
       defaultLanguageCode,
       productSlug,
     );
-    
+
     if (!data) {
       Logger.error(
         `Cannot update document: no valid translation data for product ${product.id}`,
@@ -476,7 +536,10 @@ export class StrapiService {
       return;
     }
 
-    const existingDocument = await this.findDocumentBySlug(COLLECTION_SLUG.product, slug);
+    const existingDocument = await this.findDocumentBySlug(
+      COLLECTION_SLUG.product,
+      slug,
+    );
 
     if (!existingDocument) {
       Logger.warn(
@@ -532,7 +595,10 @@ export class StrapiService {
     variantSlug: string,
     collections?: Collection[],
   ): Promise<void> {
-    const existingDocument = await this.findDocumentBySlug(COLLECTION_SLUG.product_variant, variantSlug);
+    const existingDocument = await this.findDocumentBySlug(
+      COLLECTION_SLUG.product_variant,
+      variantSlug,
+    );
 
     if (!existingDocument) {
       Logger.warn(
@@ -576,7 +642,10 @@ export class StrapiService {
     defaultLanguageCode: LanguageCode,
     variantSlug: string,
   ): Promise<void> {
-    const existingDocument = await this.findDocumentBySlug(COLLECTION_SLUG.product_variant, variantSlug);
+    const existingDocument = await this.findDocumentBySlug(
+      COLLECTION_SLUG.product_variant,
+      variantSlug,
+    );
 
     if (!existingDocument) {
       Logger.warn(
@@ -643,7 +712,10 @@ export class StrapiService {
       return;
     }
 
-    const existingDocument = await this.findDocumentBySlug(COLLECTION_SLUG.collection, slug);
+    const existingDocument = await this.findDocumentBySlug(
+      COLLECTION_SLUG.collection,
+      slug,
+    );
 
     if (!existingDocument) {
       Logger.warn(
@@ -697,7 +769,10 @@ export class StrapiService {
       return;
     }
 
-    const existingDocument = await this.findDocumentBySlug(COLLECTION_SLUG.collection, slug);
+    const existingDocument = await this.findDocumentBySlug(
+      COLLECTION_SLUG.collection,
+      slug,
+    );
 
     if (!existingDocument) {
       Logger.warn(
@@ -757,7 +832,10 @@ export class StrapiService {
 
       // Batch lookup all collection documents at once
       if (collectionSlugs.length > 0) {
-        const documentsMap = await this.findDocumentsBySlugs(COLLECTION_SLUG.collection, collectionSlugs);
+        const documentsMap = await this.findDocumentsBySlugs(
+          COLLECTION_SLUG.collection,
+          collectionSlugs,
+        );
 
         // Extract IDs from found documents
         documentsMap.forEach((doc, slug) => {
@@ -824,6 +902,11 @@ export class StrapiService {
     collectionSlug?: string | null,
     variants?: ProductVariant[],
   ) {
+    console.log(`\n=== COLLECTION TRANSFORM DEBUG ===`);
+    console.log(`Collection ID: ${collection.id}`);
+    console.log(`Collection slug: ${collectionSlug}`);
+    console.log(`Number of variants passed: ${variants?.length || 0}`);
+    
     const defaultTranslation = this.translationUtils.getTranslationByLanguage(
       collection.translations,
       defaultLanguageCode,
@@ -844,33 +927,99 @@ export class StrapiService {
     // Transform variants to document IDs
     const variantDocumentIds: string[] = [];
     if (variants && variants.length > 0) {
-      // First, collect all variant slugs we need to look up
-      const variantSlugs: string[] = [];
-
-      for (const variant of variants) {
-        if (variant.product && variant.product.translations) {
-          const productSlug = this.translationUtils.getSlugByLanguage(
-            variant.product.translations,
-            defaultLanguageCode,
-          );
-
-          if (productSlug) {
-            const variantSlug = `${productSlug}-variant-${variant.id}`;
-            variantSlugs.push(variantSlug);
+      console.log(`Processing ${variants.length} variants for collection ${collection.id}`);
+      
+      // Log details of each variant
+      variants.forEach((variant, index) => {
+        console.log(`\nVariant ${index + 1}:`);
+        console.log(`  - ID: ${variant.id}`);
+        console.log(`  - Has product: ${!!variant.product}`);
+        if (variant.product) {
+          console.log(`  - Product ID: ${variant.product.id}`);
+          console.log(`  - Product has translations: ${!!variant.product.translations}`);
+          console.log(`  - Product translations count: ${variant.product.translations?.length || 0}`);
+          if (variant.product.translations?.length > 0) {
+            console.log(`  - Product translations:`, variant.product.translations.map(t => ({ languageCode: t.languageCode, name: t.name, slug: t.slug })));
           }
         }
+      });
+      // First, collect all variant slugs we need to look up
+      const variantSlugs: string[] = [];
+      console.log(`\n--- Processing ${variants.length} variants for slug generation ---`);
+
+      for (const variant of variants) {
+        console.log(`\nProcessing variant ${variant.id}:`);
+        console.log(`  - Has product relation: ${!!variant.product}`);
+
+        if (variant.product) {
+          console.log(`  - Product ID: ${variant.product.id}`);
+          console.log(`  - Product has translations: ${!!variant.product.translations}`);
+          console.log(`  - Product translations count: ${variant.product.translations?.length || 0}`);
+
+          if (
+            variant.product.translations &&
+            variant.product.translations.length > 0
+          ) {
+            const productSlug = this.translationUtils.getSlugByLanguage(
+              variant.product.translations,
+              defaultLanguageCode,
+            );
+
+            console.log(`  - Generated product slug: "${productSlug}"`);
+            console.log(`  - Default language code: ${defaultLanguageCode}`);
+
+            if (productSlug) {
+              const variantSlug = `${productSlug}-variant-${variant.id}`;
+              variantSlugs.push(variantSlug);
+              console.log(`  ✓ Generated variant slug: "${variantSlug}"`);
+            } else {
+              console.log(`  ✗ No product slug found for language ${defaultLanguageCode}`);
+            }
+          } else {
+            console.log(`  ✗ Product ${variant.product.id} has no translations`);
+          }
+        } else {
+          console.log(`  ✗ Variant ${variant.id} has no product relation loaded`);
+        }
       }
+      
+      console.log(`\n--- Generated variant slugs for collection ${collection.id}: ---`);
+      console.log(variantSlugs);
 
       // Batch lookup all variant documents at once
+      Logger.debug(
+        `Variant slugs for collection ${collection.id}: ${JSON.stringify(variantSlugs)}`,
+      );
+
       if (variantSlugs.length > 0) {
-        const documentsMap = await this.findDocumentsBySlugs(COLLECTION_SLUG.product_variant, variantSlugs);
+        console.log(`\n--- Looking up variant documents in Strapi ---`);
+        console.log(`Looking for slugs in "${COLLECTION_SLUG.product_variant}"`);
+        console.log(`Slugs to find:`, variantSlugs);
+        
+        const documentsMap = await this.findDocumentsBySlugs(
+          COLLECTION_SLUG.product_variant,
+          variantSlugs,
+        );
+
+        console.log(`\n--- Strapi lookup results ---`);
+        console.log(`Found ${documentsMap.size} variant documents in Strapi:`);
+        
+        // Show what was found
+        documentsMap.forEach((doc, slug) => {
+          console.log(`  - Slug: "${slug}" -> Document ID: ${doc?.id}, Document:`, doc);
+        });
 
         // Extract IDs from found documents
         documentsMap.forEach((doc, slug) => {
           if (doc?.id) {
             variantDocumentIds.push(doc.id.toString());
+            console.log(`  ✓ Added document ID: ${doc.id} for slug: "${slug}"`);
+          } else {
+            console.log(`  ✗ No ID found for slug: "${slug}"`);
           }
         });
+
+        console.log(`\nFinal variant document IDs array: [${variantDocumentIds.join(', ')}]`);
       }
     }
 
@@ -881,13 +1030,25 @@ export class StrapiService {
       productVariants: variantDocumentIds,
     };
 
+    console.log(`\n=== FINAL COLLECTION DATA TO BE SENT TO STRAPI ===`);
+    console.log(JSON.stringify(result, null, 2));
+    console.log(`Collection: "${result.name}" (ID: ${result.vendureId})`);
+    console.log(`Slug: "${result.slug}"`);
+    console.log(`Product Variant IDs: [${result.productVariants.join(', ')}]`);
+    console.log(`Number of variant relationships: ${result.productVariants.length}`);
+    console.log(`=================================================\n`);
+
     return result;
   }
 
   private async checkStrapiCollections() {
     try {
       // Check if Strapi collections exist by attempting to query each one
-      const collections = [COLLECTION_SLUG.product, COLLECTION_SLUG.product_variant, COLLECTION_SLUG.collection];
+      const collections = [
+        COLLECTION_SLUG.product,
+        COLLECTION_SLUG.product_variant,
+        COLLECTION_SLUG.collection,
+      ];
       const results: Record<string, boolean> = {};
 
       for (const collection of collections) {
@@ -951,7 +1112,7 @@ export class StrapiService {
     data?: any;
   }): Promise<any> {
     const url = `${this.strapiBaseUrl}/${endpoint}`;
-    
+
     const config: RequestInit = {
       method,
       headers: this.getStrapiHeaders(),
@@ -965,7 +1126,7 @@ export class StrapiService {
     await this.enforceRateLimit();
 
     Logger.debug(`Making Strapi API request: ${method} ${url}`);
-    
+
     const response = await fetch(url, config);
 
     if (!response.ok) {
