@@ -1,0 +1,69 @@
+{
+  "version": "0.0.0",
+  "keywords": [],
+  "type": "commonjs",
+  "exports": {
+    "./package.json": "./package.json",
+    "./strapi-admin": {
+      "types": "./dist/admin/src/index.d.ts",
+      "source": "./admin/src/index.ts",
+      "import": "./dist/admin/index.mjs",
+      "require": "./dist/admin/index.js",
+      "default": "./dist/admin/index.js"
+    },
+    "./strapi-server": {
+      "types": "./dist/server/src/index.d.ts",
+      "source": "./server/src/index.ts",
+      "import": "./dist/server/index.mjs",
+      "require": "./dist/server/index.js",
+      "default": "./dist/server/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "strapi-plugin build",
+    "watch": "strapi-plugin watch",
+    "watch:link": "strapi-plugin watch:link",
+    "verify": "strapi-plugin verify",
+    "test:ts:front": "run -T tsc -p admin/tsconfig.json",
+    "test:ts:back": "run -T tsc -p server/tsconfig.json"
+  },
+  "dependencies": {
+    "@strapi/design-system": "^2.0.0-rc.29",
+    "@strapi/icons": "^2.0.0-rc.29",
+    "react-intl": "^7.1.11"
+  },
+  "devDependencies": {
+    "@strapi/strapi": "^5.23.1",
+    "@strapi/sdk-plugin": "^5.3.2",
+    "prettier": "^3.6.2",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "react-router-dom": "^6.30.1",
+    "styled-components": "^6.1.19",
+    "@types/react": "^19.1.12",
+    "@types/react-dom": "^19.1.9",
+    "@strapi/typescript-utils": "^5.23.1",
+    "typescript": "^5.9.2"
+  },
+  "peerDependencies": {
+    "@strapi/strapi": "^5.23.1",
+    "@strapi/sdk-plugin": "^5.3.2",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "react-router-dom": "^6.30.1",
+    "styled-components": "^6.1.19"
+  },
+  "strapi": {
+    "kind": "plugin",
+    "name": "vendure-integration-plugin",
+    "displayName": "Vendure Integration Plugin",
+    "description": "Used to integrate Vendure Headless E-Commerce platfrom with Strapi"
+  },
+  "name": "vendure-integration-plugin",
+  "description": "Used to integrate Vendure Headless E-Commerce platfrom with Strapi",
+  "license": "MIT",
+  "author": "Housein Abo Shaar <housein@vendure.io>"
+}

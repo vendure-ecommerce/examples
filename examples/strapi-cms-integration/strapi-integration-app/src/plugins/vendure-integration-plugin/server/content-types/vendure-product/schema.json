@@ -1,0 +1,14 @@
+
+{
+  "kind": "collectionType",
+  "collectionName": "vendure_products",
+  "info": {
+    "singularName": "vendure-product",
+    "pluralName": "vendure-products",
+    "displayName": "Vendure Product"
+  },
+  "options": {
+    "comment": ""
+  },
+  "attributes": {}
+}
