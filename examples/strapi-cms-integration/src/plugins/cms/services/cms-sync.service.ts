@@ -45,12 +45,8 @@ export class CmsSyncService implements OnApplicationBootstrap {
   async onApplicationBootstrap() {
     if (this.processContext.isWorker) {
       // TODO: Uncomment to enable auto-sync on startup (not recommended for production)
-      // await this.syncAllEntitiesToCmsGeneric(
-      // "Product",
-      // Product,
-      // this.syncProductToCms.bind(this),
-      // );
-      // Logger.info("CMS Sync Service initialized");
+      Logger.info("CMS Sync Service initialized");
+      await this.syncAllEntityTypes();
     }
   }
 

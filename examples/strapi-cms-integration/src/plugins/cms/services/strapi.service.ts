@@ -474,7 +474,7 @@ export class StrapiService {
 
     await this.makeStrapiRequest({
       method: "PUT",
-      endpoint: `${COLLECTION_SLUG.product}/${existingDocument.id}`,
+      endpoint: `${COLLECTION_SLUG.product}/${existingDocument.documentId}`,
       data: { data },
     });
 
@@ -509,7 +509,7 @@ export class StrapiService {
 
     await this.makeStrapiRequest({
       method: "DELETE",
-      endpoint: `${COLLECTION_SLUG.product}/${existingDocument.id}`,
+      endpoint: `${COLLECTION_SLUG.product}/${existingDocument.documentId}`,
     });
 
     Logger.info(
@@ -584,7 +584,7 @@ export class StrapiService {
 
     await this.makeStrapiRequest({
       method: "PUT",
-      endpoint: `${COLLECTION_SLUG.product_variant}/${existingDocument.id}`,
+      endpoint: `${COLLECTION_SLUG.product_variant}/${existingDocument.documentId}`,
       data: { data },
     });
 
@@ -609,7 +609,7 @@ export class StrapiService {
 
     await this.makeStrapiRequest({
       method: "DELETE",
-      endpoint: `${COLLECTION_SLUG.product_variant}/${existingDocument.id}`,
+      endpoint: `${COLLECTION_SLUG.product_variant}/${existingDocument.documentId}`,
     });
 
     Logger.info(
@@ -695,7 +695,7 @@ export class StrapiService {
 
     await this.makeStrapiRequest({
       method: "PUT",
-      endpoint: `${COLLECTION_SLUG.collection}/${existingDocument.id}`,
+      endpoint: `${COLLECTION_SLUG.collection}/${existingDocument.documentId}`,
       data: { data },
     });
 
@@ -730,7 +730,7 @@ export class StrapiService {
 
     await this.makeStrapiRequest({
       method: "DELETE",
-      endpoint: `${COLLECTION_SLUG.collection}/${existingDocument.id}`,
+      endpoint: `${COLLECTION_SLUG.collection}/${existingDocument.documentId}`,
     });
 
     Logger.info(
