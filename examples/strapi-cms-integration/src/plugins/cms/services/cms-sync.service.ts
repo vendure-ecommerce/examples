@@ -19,7 +19,7 @@ import { In } from "typeorm";
 import { CMS_PLUGIN_OPTIONS, loggerCtx } from "../constants";
 import { PluginInitOptions, SyncJobData, SyncResponse } from "../types";
 import { TranslationUtils } from "../utils/translation.utils";
-import { PayloadService } from "./payload.service";
+import { StrapiService } from "./strapi.service";
 
 @Injectable()
 export class CmsSyncService implements OnApplicationBootstrap {
@@ -38,7 +38,7 @@ export class CmsSyncService implements OnApplicationBootstrap {
     private readonly channelService: ChannelService,
     private readonly collectionService: CollectionService,
     private readonly requestContextService: RequestContextService,
-    private readonly payloadService: PayloadService,
+    private readonly strapiService: StrapiService,
     private processContext: ProcessContext,
   ) {}
 
@@ -455,7 +455,7 @@ export class CmsSyncService implements OnApplicationBootstrap {
         defaultLanguageCode,
       );
 
-      await this.payloadService.syncProduct({
+      await this.strapiService.syncProduct({
         product,
         defaultLanguageCode,
         operationType,
@@ -518,7 +518,7 @@ export class CmsSyncService implements OnApplicationBootstrap {
       // Find collections for this variant
       const collections = await this.findCollectionsForVariant(ctx, variant.id);
 
-      await this.payloadService.syncProductVariant({
+      await this.strapiService.syncProductVariant({
         variant,
         defaultLanguageCode,
         operationType,
@@ -579,7 +579,7 @@ export class CmsSyncService implements OnApplicationBootstrap {
       // Find variants for this collection
       const variants = await this.findVariantsForCollection(ctx, collection.id);
 
-      await this.payloadService.syncCollection({
+      await this.strapiService.syncCollection({
         collection,
         defaultLanguageCode,
         operationType,

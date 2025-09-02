@@ -12,15 +12,15 @@ import { CMS_PLUGIN_OPTIONS } from "../constants";
 import { OperationType, PluginInitOptions } from "../types";
 import { TranslationUtils } from "../utils/translation.utils";
 const COLLECTION_SLUG = {
-  product: "vendure-product",
-  product_variant: "vendure-product-variant",
-  collection: "vendure-collection",
+  product: "vendure-products",
+  product_variant: "vendure-product-variants",
+  collection: "vendure-collections",
 };
 
 @Injectable()
-export class PayloadService {
-  private readonly payloadBaseUrl = "http://localhost:3001/api";
-  private isInitialized = true; // Payload doesn't need initialization like Storyblok
+export class StrapiService {
+  private readonly strapiBaseUrl = "http://localhost:1337/api";
+  private isInitialized = true; // Strapi doesn't need initialization like Storyblok
   private readonly translationUtils = new TranslationUtils();
   private lastApiCallTime = 0;
   private readonly rateLimitDelay = 100; // 100ms between calls for local API
@@ -49,7 +49,7 @@ export class PayloadService {
       );
 
       Logger.info(
-        `Syncing product ${product.id} (${operationType}) to Payload`,
+        `Syncing product ${product.id} (${operationType}) to Strapi`,
       );
 
       switch (operationType) {
@@ -75,13 +75,13 @@ export class PayloadService {
       }
 
       Logger.info(
-        `Successfully synced product ${product.id} (${operationType}) to Payload`,
+        `Successfully synced product ${product.id} (${operationType}) to Strapi`,
       );
     } catch (error) {
       const errorMessage =
         error instanceof Error ? error.message : "Unknown error";
       Logger.error(
-        `Failed to sync product ${product.id} (${operationType}) to Payload: ${errorMessage}`,
+        `Failed to sync product ${product.id} (${operationType}) to Strapi: ${errorMessage}`,
       );
       throw error;
     }
@@ -107,7 +107,7 @@ export class PayloadService {
       );
 
       Logger.info(
-        `Syncing product variant ${variant.id} (${operationType}) to Payload`,
+        `Syncing product variant ${variant.id} (${operationType}) to Strapi`,
       );
 
       switch (operationType) {
@@ -139,13 +139,13 @@ export class PayloadService {
       }
 
       Logger.info(
-        `Successfully synced product variant ${variant.id} (${operationType}) to Payload`,
+        `Successfully synced product variant ${variant.id} (${operationType}) to Strapi`,
       );
     } catch (error) {
       const errorMessage =
         error instanceof Error ? error.message : "Unknown error";
       Logger.error(
-        `Failed to sync product variant ${variant.id} (${operationType}) to Payload: ${errorMessage}`,
+        `Failed to sync product variant ${variant.id} (${operationType}) to Strapi: ${errorMessage}`,
       );
       throw error;
     }
@@ -171,7 +171,7 @@ export class PayloadService {
       );
 
       Logger.info(
-        `Syncing collection ${collection.id} (${operationType}) to Payload`,
+        `Syncing collection ${collection.id} (${operationType}) to Strapi`,
       );
 
       switch (operationType) {
@@ -199,32 +199,32 @@ export class PayloadService {
       }
 
       Logger.info(
-        `Successfully synced collection ${collection.id} (${operationType}) to Payload`,
+        `Successfully synced collection ${collection.id} (${operationType}) to Strapi`,
       );
     } catch (error) {
       const errorMessage =
         error instanceof Error ? error.message : "Unknown error";
       Logger.error(
-        `Failed to sync collection ${collection.id} (${operationType}) to Payload: ${errorMessage}`,
+        `Failed to sync collection ${collection.id} (${operationType}) to Strapi: ${errorMessage}`,
       );
       throw error;
     }
   }
 
   /**
-   * Finds a Payload document by slug in a specific collection
+   * Finds a Strapi document by slug in a specific collection
    * @param collectionSlug The collection to search in
    * @param slug The slug to search for
    * @returns The document object or null if not found
    */
   private async findDocumentBySlug(collectionSlug: string, slug: string): Promise<any> {
     try {
-      const response = await this.makePayloadRequest({
+      const response = await this.makeStrapiRequest({
         method: "GET",
-        endpoint: `${collectionSlug}?where[slug][equals]=${encodeURIComponent(slug)}&limit=1`,
+        endpoint: `${collectionSlug}?filters[slug][$eq]=${encodeURIComponent(slug)}&pagination[limit]=1`,
       });
 
-      return response.docs && response.docs.length > 0 ? response.docs[0] : null;
+      return response.data && response.data.length > 0 ? response.data[0] : null;
     } catch (error) {
       Logger.error(`Failed to find document by slug: ${slug}`, String(error));
       return null;
@@ -232,7 +232,7 @@ export class PayloadService {
   }
 
   /**
-   * Finds multiple Payload documents by slugs across collections
+   * Finds multiple Strapi documents by slugs across collections
    * @param collectionSlug The collection to search in
    * @param slugs Array of slugs to search for
    * @returns Map of slug to document object
@@ -245,16 +245,16 @@ export class PayloadService {
     }
 
     try {
-      // Payload supports "in" operator for multiple values
+      // Strapi supports "$in" operator for multiple values
       const slugsParam = slugs.map(slug => encodeURIComponent(slug)).join(',');
-      const response = await this.makePayloadRequest({
+      const response = await this.makeStrapiRequest({
         method: "GET",
-        endpoint: `${collectionSlug}?where[slug][in]=${slugsParam}`,
+        endpoint: `${collectionSlug}?filters[slug][$in]=${slugsParam}`,
       });
 
-      if (response.docs) {
-        for (const doc of response.docs) {
-          documentMap.set(doc.slug, doc);
+      if (response.data) {
+        for (const doc of response.data) {
+          documentMap.set(doc.attributes.slug, doc);
         }
       }
     } catch (error) {
@@ -392,14 +392,14 @@ export class PayloadService {
       return;
     }
 
-    const result = await this.makePayloadRequest({
+    const result = await this.makeStrapiRequest({
       method: "POST",
       endpoint: COLLECTION_SLUG.product,
-      data,
+      data: { data },
     });
 
     Logger.info(
-      `Created document for product ${product.id} with Payload ID: ${result.doc?.id}`,
+      `Created document for product ${product.id} with Strapi ID: ${result.data?.id}`,
     );
   }
 
@@ -424,7 +424,7 @@ export class PayloadService {
 
     if (!existingDocument) {
       Logger.warn(
-        `Document not found in Payload for slug: ${slug}. Creating new document instead.`,
+        `Document not found in Strapi for slug: ${slug}. Creating new document instead.`,
       );
       await this.createDocumentFromProduct(product, defaultLanguageCode);
       return;
@@ -443,14 +443,14 @@ export class PayloadService {
       return;
     }
 
-    await this.makePayloadRequest({
-      method: "PATCH",
+    await this.makeStrapiRequest({
+      method: "PUT",
       endpoint: `${COLLECTION_SLUG.product}/${existingDocument.id}`,
-      data,
+      data: { data },
     });
 
     Logger.info(
-      `Updated document for product ${product.id} (Payload ID: ${existingDocument.id})`,
+      `Updated document for product ${product.id} (Strapi ID: ${existingDocument.id})`,
     );
   }
 
@@ -473,18 +473,18 @@ export class PayloadService {
 
     if (!existingDocument) {
       Logger.warn(
-        `Document not found in Payload for slug: ${slug}, nothing to delete`,
+        `Document not found in Strapi for slug: ${slug}, nothing to delete`,
       );
       return;
     }
 
-    await this.makePayloadRequest({
+    await this.makeStrapiRequest({
       method: "DELETE",
       endpoint: `${COLLECTION_SLUG.product}/${existingDocument.id}`,
     });
 
     Logger.info(
-      `Deleted document for product ${product.id} (Payload ID: ${existingDocument.id})`,
+      `Deleted document for product ${product.id} (Strapi ID: ${existingDocument.id})`,
     );
   }
 
@@ -508,14 +508,14 @@ export class PayloadService {
       return;
     }
 
-    const result = await this.makePayloadRequest({
+    const result = await this.makeStrapiRequest({
       method: "POST",
       endpoint: COLLECTION_SLUG.product_variant,
-      data,
+      data: { data },
     });
 
     Logger.info(
-      `Created document for variant ${variant.id} with Payload ID: ${result.doc?.id}`,
+      `Created document for variant ${variant.id} with Strapi ID: ${result.data?.id}`,
     );
   }
 
@@ -553,14 +553,14 @@ export class PayloadService {
       return;
     }
 
-    await this.makePayloadRequest({
-      method: "PATCH",
+    await this.makeStrapiRequest({
+      method: "PUT",
       endpoint: `${COLLECTION_SLUG.product_variant}/${existingDocument.id}`,
-      data,
+      data: { data },
     });
 
     Logger.info(
-      `Updated document for variant ${variant.id} (Payload ID: ${existingDocument.id})`,
+      `Updated document for variant ${variant.id} (Strapi ID: ${existingDocument.id})`,
     );
   }
 
@@ -578,13 +578,13 @@ export class PayloadService {
       return;
     }
 
-    await this.makePayloadRequest({
+    await this.makeStrapiRequest({
       method: "DELETE",
       endpoint: `${COLLECTION_SLUG.product_variant}/${existingDocument.id}`,
     });
 
     Logger.info(
-      `Deleted document for variant ${variant.id} (Payload ID: ${existingDocument.id})`,
+      `Deleted document for variant ${variant.id} (Strapi ID: ${existingDocument.id})`,
     );
   }
 
@@ -608,14 +608,14 @@ export class PayloadService {
       return;
     }
 
-    const result = await this.makePayloadRequest({
+    const result = await this.makeStrapiRequest({
       method: "POST",
       endpoint: COLLECTION_SLUG.collection,
-      data,
+      data: { data },
     });
 
     Logger.info(
-      `Created document for collection ${collection.id} with Payload ID: ${result.doc?.id}`,
+      `Created document for collection ${collection.id} with Strapi ID: ${result.data?.id}`,
     );
   }
 
@@ -640,7 +640,7 @@ export class PayloadService {
 
     if (!existingDocument) {
       Logger.warn(
-        `Document not found in Payload for slug: ${slug}. Creating new document instead.`,
+        `Document not found in Strapi for slug: ${slug}. Creating new document instead.`,
       );
       await this.createDocumentFromCollection(
         collection,
@@ -664,14 +664,14 @@ export class PayloadService {
       return;
     }
 
-    await this.makePayloadRequest({
-      method: "PATCH",
+    await this.makeStrapiRequest({
+      method: "PUT",
       endpoint: `${COLLECTION_SLUG.collection}/${existingDocument.id}`,
-      data,
+      data: { data },
     });
 
     Logger.info(
-      `Updated document for collection ${collection.id} (Payload ID: ${existingDocument.id})`,
+      `Updated document for collection ${collection.id} (Strapi ID: ${existingDocument.id})`,
     );
   }
 
@@ -694,18 +694,18 @@ export class PayloadService {
 
     if (!existingDocument) {
       Logger.warn(
-        `Document not found in Payload for slug: ${slug}, nothing to delete`,
+        `Document not found in Strapi for slug: ${slug}, nothing to delete`,
       );
       return;
     }
 
-    await this.makePayloadRequest({
+    await this.makeStrapiRequest({
       method: "DELETE",
       endpoint: `${COLLECTION_SLUG.collection}/${existingDocument.id}`,
     });
 
     Logger.info(
-      `Deleted document for collection ${collection.id} (Payload ID: ${existingDocument.id})`,
+      `Deleted document for collection ${collection.id} (Strapi ID: ${existingDocument.id})`,
     );
   }
 
@@ -877,17 +877,17 @@ export class PayloadService {
     return result;
   }
 
-  private async checkPayloadCollections() {
+  private async checkStrapiCollections() {
     try {
-      // Check if Payload collections exist by attempting to query each one
+      // Check if Strapi collections exist by attempting to query each one
       const collections = [COLLECTION_SLUG.product, COLLECTION_SLUG.product_variant, COLLECTION_SLUG.collection];
       const results: Record<string, boolean> = {};
 
       for (const collection of collections) {
         try {
-          await this.makePayloadRequest({
+          await this.makeStrapiRequest({
             method: "GET",
-            endpoint: `${collection}?limit=1`,
+            endpoint: `${collection}?pagination[limit]=1`,
           });
           results[collection] = true;
         } catch (error) {
@@ -901,7 +901,7 @@ export class PayloadService {
         collection: results[COLLECTION_SLUG.collection],
       };
     } catch (error) {
-      Logger.error("Failed to check Payload collections", String(error));
+      Logger.error("Failed to check Strapi collections", String(error));
       return {
         product: false,
         variant: false,
@@ -910,7 +910,7 @@ export class PayloadService {
     }
   }
 
-  private getPayloadHeaders(): Record<string, string> {
+  private getStrapiHeaders(): Record<string, string> {
     const headers: Record<string, string> = {
       "Content-Type": "application/json",
     };
@@ -934,36 +934,36 @@ export class PayloadService {
 
     this.lastApiCallTime = Date.now();
   }
-  private async makePayloadRequest({
+  private async makeStrapiRequest({
     method,
     endpoint,
     data,
   }: {
-    method: "GET" | "POST" | "PATCH" | "DELETE";
+    method: "GET" | "POST" | "PUT" | "DELETE";
     endpoint: string;
     data?: any;
   }): Promise<any> {
-    const url = `${this.payloadBaseUrl}/${endpoint}`;
+    const url = `${this.strapiBaseUrl}/${endpoint}`;
     
     const config: RequestInit = {
       method,
-      headers: this.getPayloadHeaders(),
+      headers: this.getStrapiHeaders(),
     };
 
-    if (data && (method === "POST" || method === "PATCH")) {
+    if (data && (method === "POST" || method === "PUT")) {
       config.body = JSON.stringify(data);
     }
 
     // Enforce rate limiting before making the request
     await this.enforceRateLimit();
 
-    Logger.debug(`Making Payload API request: ${method} ${url}`);
+    Logger.debug(`Making Strapi API request: ${method} ${url}`);
     
     const response = await fetch(url, config);
 
     if (!response.ok) {
       const errorText = await response.text();
-      const errorMessage = `Payload API error: ${response.status} ${response.statusText} - ${errorText}`;
+      const errorMessage = `Strapi API error: ${response.status} ${response.statusText} - ${errorText}`;
       Logger.error(errorMessage);
       throw new Error(errorMessage);
     }
