@@ -18,7 +18,7 @@ const COMPONENT_TYPE = {
 };
 
 @Injectable()
-export class StoryblokService implements OnApplicationBootstrap {
+export class PayloadService {
   private readonly storyblokBaseUrl = "https://mapi.storyblok.com/v1";
   private readonly componentsPath = "components";
   private isInitialized = false;
@@ -31,10 +31,6 @@ export class StoryblokService implements OnApplicationBootstrap {
     private processContext: ProcessContext,
     @Inject(CMS_PLUGIN_OPTIONS) private options: PluginInitOptions,
   ) {}
-
-  async onApplicationBootstrap() {
-    this.ensureStoryContentTypesExists();
-  }
 
   async syncProduct({
     product,
@@ -912,113 +908,6 @@ export class StoryblokService implements OnApplicationBootstrap {
       variant: checkIfExists(COMPONENT_TYPE.product_variant),
       collection: checkIfExists(COMPONENT_TYPE.collection),
     };
-  }
-
-  async ensureStoryContentTypesExists() {
-    const contentCheck = await this.checkContentTypes();
-    const shapeData = (componentType: keyof typeof COMPONENT_TYPE) => {
-      const displayNames = {
-        product: "Vendure Product",
-        product_variant: "Vendure Product Variant",
-        collection: "Vendure Collection",
-      };
-
-      // Base schema for all component types
-      const baseSchema = {
-        vendureId: {
-          type: "text",
-          pos: 0,
-          required: true,
-        },
-      };
-
-      // Add relationship fields based on component type
-      let relationshipSchema = {};
-      if (componentType === "product") {
-        relationshipSchema = {
-          variants: {
-            type: "options",
-            pos: 1,
-            source: "internal_stories",
-            filter_content_type: [COMPONENT_TYPE.product_variant],
-            display_name: "Product Variants",
-          },
-        };
-      } else if (componentType === "product_variant") {
-        relationshipSchema = {
-          parentProduct: {
-            type: "option",
-            pos: 1,
-            source: "internal_stories",
-            filter_content_type: [COMPONENT_TYPE.product],
-            display_name: "Parent Product",
-          },
-          collections: {
-            type: "options",
-            pos: 2,
-            source: "internal_stories",
-            filter_content_type: [COMPONENT_TYPE.collection],
-            display_name: "Collections",
-          },
-        };
-      } else if (componentType === "collection") {
-        relationshipSchema = {
-          variants: {
-            type: "options",
-            pos: 1,
-            source: "internal_stories",
-            filter_content_type: [COMPONENT_TYPE.product_variant],
-            display_name: "Product Variants",
-          },
-        };
-      }
-
-      return {
-        component: {
-          name: COMPONENT_TYPE[componentType],
-          display_name: displayNames[componentType],
-          schema: {
-            ...baseSchema,
-            ...relationshipSchema,
-          },
-          is_root: true,
-          is_nestable: false,
-        },
-      };
-    };
-
-    const createContentType = async (
-      contentType: keyof typeof COMPONENT_TYPE,
-    ) => {
-      const data = shapeData(contentType);
-
-      Logger.info(`Creating content type ${data.component.name}`);
-      const response = await this.makeStoryblokRequest({
-        method: "POST",
-        endpoint: this.componentsPath,
-        data: data,
-        skipInitializationCheck: true,
-      });
-
-      if (response.component.id) {
-        Logger.info(
-          `Created ${response.component.name} block with ID ${response.component.id}`,
-        );
-      }
-    };
-
-    if (!contentCheck.product) {
-      await createContentType("product");
-    }
-
-    if (!contentCheck.variant) {
-      await createContentType("product_variant");
-    }
-
-    if (!contentCheck.collection) {
-      await createContentType("collection");
-    }
-    this.isInitialized = true;
   }
 
   private getStoryblokHeaders(): Record<string, string> {

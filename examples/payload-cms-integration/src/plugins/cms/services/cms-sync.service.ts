@@ -19,7 +19,7 @@ import { In } from "typeorm";
 import { CMS_PLUGIN_OPTIONS, loggerCtx } from "../constants";
 import { PluginInitOptions, SyncJobData, SyncResponse } from "../types";
 import { TranslationUtils } from "../utils/translation.utils";
-import { StoryblokService } from "./storyblok.service";
+import { PayloadService } from "./payload.service";
 
 @Injectable()
 export class CmsSyncService implements OnApplicationBootstrap {
@@ -38,7 +38,7 @@ export class CmsSyncService implements OnApplicationBootstrap {
     private readonly channelService: ChannelService,
     private readonly collectionService: CollectionService,
     private readonly requestContextService: RequestContextService,
-    private readonly storyblockService: StoryblokService,
+    private readonly storyblockService: PayloadService,
     private processContext: ProcessContext,
   ) {}
 
@@ -51,12 +51,7 @@ export class CmsSyncService implements OnApplicationBootstrap {
       // this.syncProductToCms.bind(this),
       // );
       // Logger.info("CMS Sync Service initialized");
-      this.ensureContentTypesExists();
     }
-  }
-
-  ensureContentTypesExists() {
-    this.storyblockService.ensureStoryContentTypesExists();
   }
 
   private async getDefaultLanguageCode(): Promise<LanguageCode> {
