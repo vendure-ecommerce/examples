@@ -22,7 +22,7 @@
     "src/plugins/**/dashboard/*",
     "admin-ui",
     "vite.*.*ts",
-    "payload-integration-app"
+    "strapi-integration-app"
   ],
   "ts-node": {
     "files": true
