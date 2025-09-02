@@ -43,8 +43,6 @@ export class PayloadService {
     productSlug?: string | null;
   }) {
     try {
-      console.log(`[PayloadService] Starting syncProduct - ID: ${product.id}, Operation: ${operationType}, ProductSlug: ${productSlug}`);
-      
       this.translationUtils.validateTranslations(
         product.translations,
         defaultLanguageCode,
@@ -54,11 +52,8 @@ export class PayloadService {
         `Syncing product ${product.id} (${operationType}) to Payload`,
       );
 
-      console.log(`[PayloadService] About to execute ${operationType} operation for product ${product.id}`);
-      
       switch (operationType) {
         case "create":
-          console.log(`[PayloadService] Calling createDocumentFromProduct for product ${product.id}`);
           await this.createDocumentFromProduct(
             product,
             defaultLanguageCode,
@@ -66,7 +61,6 @@ export class PayloadService {
           );
           break;
         case "update":
-          console.log(`[PayloadService] Calling updateDocumentFromProduct for product ${product.id}`);
           await this.updateDocumentFromProduct(
             product,
             defaultLanguageCode,
@@ -74,11 +68,9 @@ export class PayloadService {
           );
           break;
         case "delete":
-          console.log(`[PayloadService] Calling deleteDocumentFromProduct for product ${product.id}`);
           await this.deleteDocumentFromProduct(product, defaultLanguageCode);
           break;
         default:
-          console.log(`[PayloadService] Unknown operation type: ${operationType}`);
           Logger.error(`Unknown operation type: ${operationType}`);
       }
 
@@ -416,28 +408,21 @@ export class PayloadService {
     defaultLanguageCode: LanguageCode,
     productSlug?: string | null,
   ): Promise<void> {
-    console.log(`[PayloadService] updateDocumentFromProduct - Starting update for product ${product.id}`);
-    
     const slug = this.translationUtils.getSlugByLanguage(
       product.translations,
       defaultLanguageCode,
     );
-    console.log(`[PayloadService] updateDocumentFromProduct - Found slug: ${slug} for product ${product.id}`);
     
     if (!slug) {
-      console.log(`[PayloadService] updateDocumentFromProduct - ERROR: No slug found for product ${product.id}`);
       Logger.error(
         `No slug found for product ${product.id} in language ${defaultLanguageCode}`,
       );
       return;
     }
 
-    console.log(`[PayloadService] updateDocumentFromProduct - Looking for existing document with slug: ${slug}`);
     const existingDocument = await this.findDocumentBySlug(COLLECTION_SLUG.product, slug);
-    console.log(`[PayloadService] updateDocumentFromProduct - Existing document found:`, existingDocument ? `ID: ${existingDocument.id}` : 'null');
 
     if (!existingDocument) {
-      console.log(`[PayloadService] updateDocumentFromProduct - No existing document found, creating new one`);
       Logger.warn(
         `Document not found in Payload for slug: ${slug}. Creating new document instead.`,
       );
@@ -445,30 +430,25 @@ export class PayloadService {
       return;
     }
 
-    console.log(`[PayloadService] updateDocumentFromProduct - Transforming product data`);
     const data = await this.transformProductData(
       product,
       defaultLanguageCode,
       productSlug,
     );
-    console.log(`[PayloadService] updateDocumentFromProduct - Transformed data:`, JSON.stringify(data, null, 2));
     
     if (!data) {
-      console.log(`[PayloadService] updateDocumentFromProduct - ERROR: No data to update`);
       Logger.error(
         `Cannot update document: no valid translation data for product ${product.id}`,
       );
       return;
     }
 
-    console.log(`[PayloadService] updateDocumentFromProduct - Making PATCH request to update document ID: ${existingDocument.id}`);
     await this.makePayloadRequest({
       method: "PATCH",
       endpoint: `${COLLECTION_SLUG.product}/${existingDocument.id}`,
       data,
     });
 
-    console.log(`[PayloadService] updateDocumentFromProduct - Successfully updated document for product ${product.id}`);
     Logger.info(
       `Updated document for product ${product.id} (Payload ID: ${existingDocument.id})`,
     );
@@ -964,7 +944,6 @@ export class PayloadService {
     data?: any;
   }): Promise<any> {
     const url = `${this.payloadBaseUrl}/${endpoint}`;
-    console.log(`[PayloadService] makePayloadRequest - ${method} ${url}`);
     
     const config: RequestInit = {
       method,
@@ -973,35 +952,27 @@ export class PayloadService {
 
     if (data && (method === "POST" || method === "PATCH")) {
       config.body = JSON.stringify(data);
-      console.log(`[PayloadService] makePayloadRequest - Request body:`, JSON.stringify(data, null, 2));
     }
-
-    console.log(`[PayloadService] makePayloadRequest - Headers:`, config.headers);
 
     // Enforce rate limiting before making the request
     await this.enforceRateLimit();
 
     Logger.debug(`Making Payload API request: ${method} ${url}`);
-    console.log(`[PayloadService] makePayloadRequest - About to send request`);
     
     const response = await fetch(url, config);
-    console.log(`[PayloadService] makePayloadRequest - Response status: ${response.status} ${response.statusText}`);
 
     if (!response.ok) {
       const errorText = await response.text();
       const errorMessage = `Payload API error: ${response.status} ${response.statusText} - ${errorText}`;
-      console.log(`[PayloadService] makePayloadRequest - ERROR: ${errorMessage}`);
       Logger.error(errorMessage);
       throw new Error(errorMessage);
     }
 
     if (method === "DELETE") {
-      console.log(`[PayloadService] makePayloadRequest - DELETE successful, returning empty object`);
       return {}; // DELETE requests typically don't return content
     }
 
     const responseData = await response.json();
-    console.log(`[PayloadService] makePayloadRequest - Response data:`, JSON.stringify(responseData, null, 2));
     return responseData;
   }
 }

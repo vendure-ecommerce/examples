@@ -434,25 +434,18 @@ export class CmsSyncService implements OnApplicationBootstrap {
 
   async syncProductToCms(jobData: SyncJobData): Promise<SyncResponse> {
     try {
-      console.log(`[CmsSyncService] syncProductToCms - Starting sync for job:`, JSON.stringify(jobData, null, 2));
-      
       // Fetch fresh product data from database
-      console.log(`[CmsSyncService] syncProductToCms - Fetching product from database with ID: ${jobData.entityId}`);
       const product = await this.connection.rawConnection
         .getRepository(Product)
         .findOne({
           where: { id: jobData.entityId },
           relations: { translations: true },
         });
-      
-      console.log(`[CmsSyncService] syncProductToCms - Product found:`, product ? `ID: ${product.id}, Name: ${product.translations?.[0]?.name}` : 'null');
 
       const operationType = jobData.operationType;
       const defaultLanguageCode = await this.getDefaultLanguageCode();
-      console.log(`[CmsSyncService] syncProductToCms - Operation: ${operationType}, DefaultLanguage: ${defaultLanguageCode}`);
 
       if (!product) {
-        console.log(`[CmsSyncService] syncProductToCms - ERROR: Product not found with ID ${jobData.entityId}`);
         throw new Error(`Product with ID ${jobData.entityId} not found`);
       }
 
@@ -461,16 +454,13 @@ export class CmsSyncService implements OnApplicationBootstrap {
         product.translations,
         defaultLanguageCode,
       );
-      console.log(`[CmsSyncService] syncProductToCms - Product slug: ${productSlug}`);
 
-      console.log(`[CmsSyncService] syncProductToCms - Calling payloadService.syncProduct`);
       await this.payloadService.syncProduct({
         product,
         defaultLanguageCode,
         operationType,
         productSlug,
       });
-      console.log(`[CmsSyncService] syncProductToCms - payloadService.syncProduct completed successfully`);
 
       return {
         success: true,
