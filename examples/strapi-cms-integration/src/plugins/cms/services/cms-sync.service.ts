@@ -1,5 +1,3 @@
-// TODO: Remove onApplicationBootstrap
-
 import { Inject, Injectable, OnApplicationBootstrap } from "@nestjs/common";
 import {
   ChannelService,
@@ -45,8 +43,8 @@ export class CmsSyncService implements OnApplicationBootstrap {
   async onApplicationBootstrap() {
     if (this.processContext.isWorker) {
       // TODO: Uncomment to enable auto-sync on startup (not recommended for production)
+      // await this.syncAllEntityTypes();
       Logger.info("CMS Sync Service initialized");
-      await this.syncAllEntityTypes();
     }
   }
 
