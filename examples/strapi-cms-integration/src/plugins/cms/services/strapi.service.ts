@@ -220,21 +220,16 @@ export class StrapiService {
   private async findDocumentBySlug(collectionSlug: string, slug: string): Promise<any> {
     try {
       const endpoint = `${collectionSlug}?filters[slug][\$eq]=${encodeURIComponent(slug)}&pagination[limit]=1`;
-      console.log(`🔍 findDocumentBySlug - Looking for slug: "${slug}" in collection: "${collectionSlug}"`);
-      console.log(`🔍 findDocumentBySlug - Full endpoint: "${endpoint}"`);
       
       const response = await this.makeStrapiRequest({
         method: "GET",
         endpoint,
       });
 
-      console.log(`🔍 findDocumentBySlug - Response:`, JSON.stringify(response, null, 2));
       const result = response.data && response.data.length > 0 ? response.data[0] : null;
-      console.log(`🔍 findDocumentBySlug - Returning:`, result ? `Found document with ID: ${result.id}` : 'null');
       
       return result;
     } catch (error) {
-      console.log(`❌ findDocumentBySlug - Error for slug "${slug}":`, error);
       Logger.error(`Failed to find document by slug: ${slug}`, String(error));
       return null;
     }
@@ -258,27 +253,18 @@ export class StrapiService {
       const slugsParam = slugs.map(slug => encodeURIComponent(slug)).join(',');
       const endpoint = `${collectionSlug}?filters[slug][\$in]=${slugsParam}`;
       
-      console.log(`🔍 findDocumentsBySlugs - Looking for slugs:`, slugs);
-      console.log(`🔍 findDocumentsBySlugs - Collection: "${collectionSlug}"`);
-      console.log(`🔍 findDocumentsBySlugs - Full endpoint: "${endpoint}"`);
-      
       const response = await this.makeStrapiRequest({
         method: "GET",
         endpoint,
       });
 
-      console.log(`🔍 findDocumentsBySlugs - Response:`, JSON.stringify(response, null, 2));
-
       if (response.data) {
         for (const doc of response.data) {
-          console.log(`🔍 findDocumentsBySlugs - Processing doc:`, { id: doc.id, slug: doc.slug });
           documentMap.set(doc.slug, doc);
         }
       }
       
-      console.log(`🔍 findDocumentsBySlugs - Final documentMap size:`, documentMap.size);
     } catch (error) {
-      console.log(`❌ findDocumentsBySlugs - Error:`, error);
       Logger.error(
         `Failed to find documents by slugs: ${slugs.join(", ")}`,
         String(error),
@@ -401,24 +387,17 @@ export class StrapiService {
     defaultLanguageCode: LanguageCode,
     productSlug?: string | null,
   ): Promise<void> {
-    console.log(`📝 createDocumentFromProduct - Product ID: ${product.id}, Lang: ${defaultLanguageCode}, productSlug: ${productSlug}`);
-    
     const data = await this.transformProductData(
       product,
       defaultLanguageCode,
       productSlug,
     );
     if (!data) {
-      console.log(`❌ createDocumentFromProduct - No data returned from transformProductData`);
       Logger.error(
         `Cannot create document: no valid translation data for product ${product.id}`,
       );
       return;
     }
-
-    console.log(`📝 createDocumentFromProduct - Transformed data:`, JSON.stringify(data, null, 2));
-    console.log(`📝 createDocumentFromProduct - Making POST to: ${COLLECTION_SLUG.product}`);
-    console.log(`📝 createDocumentFromProduct - Request payload:`, JSON.stringify({ data }, null, 2));
 
     const result = await this.makeStrapiRequest({
       method: "POST",
@@ -426,7 +405,6 @@ export class StrapiService {
       data: { data },
     });
 
-    console.log(`✅ createDocumentFromProduct - Result:`, JSON.stringify(result, null, 2));
     Logger.info(
       `Created document for product ${product.id} with Strapi ID: ${result.data?.id}`,
     );
@@ -944,16 +922,9 @@ export class StrapiService {
       "Content-Type": "application/json",
     };
 
-    console.log(`🔑 getStrapiHeaders - API Key configured:`, !!this.options.cmsApiKey);
-    console.log(`🔑 getStrapiHeaders - API Key length:`, this.options.cmsApiKey?.length || 0);
-    console.log(`🔑 getStrapiHeaders - API Key preview:`, this.options.cmsApiKey?.substring(0, 20) + '...' || 'NOT SET');
-
     // Add authorization header if API key is configured
     if (this.options.cmsApiKey) {
       headers.Authorization = `Bearer ${this.options.cmsApiKey}`;
-      console.log(`🔑 getStrapiHeaders - Authorization header added`);
-    } else {
-      console.log(`❌ getStrapiHeaders - NO API KEY CONFIGURED!`);
     }
 
     return headers;
@@ -981,12 +952,6 @@ export class StrapiService {
   }): Promise<any> {
     const url = `${this.strapiBaseUrl}/${endpoint}`;
     
-    console.log(`🌐 makeStrapiRequest - ${method} ${url}`);
-    console.log(`🌐 makeStrapiRequest - Headers:`, this.getStrapiHeaders());
-    if (data) {
-      console.log(`🌐 makeStrapiRequest - Body:`, JSON.stringify(data, null, 2));
-    }
-    
     const config: RequestInit = {
       method,
       headers: this.getStrapiHeaders(),
@@ -1003,12 +968,9 @@ export class StrapiService {
     
     const response = await fetch(url, config);
 
-    console.log(`🌐 makeStrapiRequest - Response status: ${response.status} ${response.statusText}`);
-
     if (!response.ok) {
       const errorText = await response.text();
       const errorMessage = `Strapi API error: ${response.status} ${response.statusText} - ${errorText}`;
-      console.log(`❌ makeStrapiRequest - Error response:`, errorText);
       Logger.error(errorMessage);
       throw new Error(errorMessage);
     }
@@ -1018,7 +980,6 @@ export class StrapiService {
     }
 
     const responseData = await response.json();
-    console.log(`🌐 makeStrapiRequest - Response data:`, JSON.stringify(responseData, null, 2));
     return responseData;
   }
 }
