@@ -68,7 +68,9 @@ export interface Config {
   blocks: {};
   collections: {
     users: User;
-    media: Media;
+    'vendure-product': VendureProduct;
+    'vendure-product-variant': VendureProductVariant;
+    'vendure-collection': VendureCollection;
     'payload-locked-documents': PayloadLockedDocument;
     'payload-preferences': PayloadPreference;
     'payload-migrations': PayloadMigration;
@@ -76,7 +78,9 @@ export interface Config {
   collectionsJoins: {};
   collectionsSelect: {
     users: UsersSelect<false> | UsersSelect<true>;
-    media: MediaSelect<false> | MediaSelect<true>;
+    'vendure-product': VendureProductSelect<false> | VendureProductSelect<true>;
+    'vendure-product-variant': VendureProductVariantSelect<false> | VendureProductVariantSelect<true>;
+    'vendure-collection': VendureCollectionSelect<false> | VendureCollectionSelect<true>;
     'payload-locked-documents': PayloadLockedDocumentsSelect<false> | PayloadLockedDocumentsSelect<true>;
     'payload-preferences': PayloadPreferencesSelect<false> | PayloadPreferencesSelect<true>;
     'payload-migrations': PayloadMigrationsSelect<false> | PayloadMigrationsSelect<true>;
@@ -139,22 +143,40 @@ export interface User {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "media".
+ * via the `definition` "vendure-product".
  */
-export interface Media {
+export interface VendureProduct {
   id: number;
-  alt: string;
+  name: string;
+  slug: string;
+  productVariants?: (number | VendureProductVariant)[] | null;
   updatedAt: string;
   createdAt: string;
-  url?: string | null;
-  thumbnailURL?: string | null;
-  filename?: string | null;
-  mimeType?: string | null;
-  filesize?: number | null;
-  width?: number | null;
-  height?: number | null;
-  focalX?: number | null;
-  focalY?: number | null;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "vendure-product-variant".
+ */
+export interface VendureProductVariant {
+  id: number;
+  name: string;
+  slug: string;
+  product?: (number | null) | VendureProduct;
+  collections?: (number | VendureCollection)[] | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "vendure-collection".
+ */
+export interface VendureCollection {
+  id: number;
+  name: string;
+  slug: string;
+  productVariants?: (number | VendureProductVariant)[] | null;
+  updatedAt: string;
+  createdAt: string;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -168,8 +190,16 @@ export interface PayloadLockedDocument {
         value: number | User;
       } | null)
     | ({
-        relationTo: 'media';
-        value: number | Media;
+        relationTo: 'vendure-product';
+        value: number | VendureProduct;
+      } | null)
+    | ({
+        relationTo: 'vendure-product-variant';
+        value: number | VendureProductVariant;
+      } | null)
+    | ({
+        relationTo: 'vendure-collection';
+        value: number | VendureCollection;
       } | null);
   globalSlug?: string | null;
   user: {
@@ -237,21 +267,40 @@ export interface UsersSelect<T extends boolean = true> {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "media_select".
+ * via the `definition` "vendure-product_select".
  */
-export interface MediaSelect<T extends boolean = true> {
-  alt?: T;
+export interface VendureProductSelect<T extends boolean = true> {
+  id?: T;
+  name?: T;
+  slug?: T;
+  productVariants?: T;
   updatedAt?: T;
   createdAt?: T;
-  url?: T;
-  thumbnailURL?: T;
-  filename?: T;
-  mimeType?: T;
-  filesize?: T;
-  width?: T;
-  height?: T;
-  focalX?: T;
-  focalY?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "vendure-product-variant_select".
+ */
+export interface VendureProductVariantSelect<T extends boolean = true> {
+  id?: T;
+  name?: T;
+  slug?: T;
+  product?: T;
+  collections?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "vendure-collection_select".
+ */
+export interface VendureCollectionSelect<T extends boolean = true> {
+  id?: T;
+  name?: T;
+  slug?: T;
+  productVariants?: T;
+  updatedAt?: T;
+  createdAt?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
