@@ -119,7 +119,7 @@ export const config: VendureConfig = {
       },
     }),
     CmsPlugin.init({
-      cmsApiKey: process.env.PAYLOAD_API_KEY, // Optional: for authentication if needed
+      cmsApiKey: process.env.STRAPI_API_KEY, // Strapi API key for authentication
     }),
   ],
 };
