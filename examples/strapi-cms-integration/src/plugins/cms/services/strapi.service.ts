@@ -19,7 +19,7 @@ const COLLECTION_SLUG = {
 
 @Injectable()
 export class StrapiService {
-  private readonly strapiBaseUrl = "http://localhost:1337/api";
+  private readonly strapiBaseUrl = this.options.strapiBaseUrl;
   private isInitialized = true; // Strapi doesn't need initialization like Storyblok
   private readonly translationUtils = new TranslationUtils();
   private lastApiCallTime = 0;
@@ -259,10 +259,13 @@ export class StrapiService {
     try {
       // Strapi v5 requires array indices for $in filters
       const queryParams = slugs
-        .map((slug, index) => `filters[slug][\$in][${index}]=${encodeURIComponent(slug)}`)
-        .join('&');
+        .map(
+          (slug, index) =>
+            `filters[slug][\$in][${index}]=${encodeURIComponent(slug)}`,
+        )
+        .join("&");
       const endpoint = `${collectionSlug}?${queryParams}`;
-      
+
       const response = await this.makeStrapiRequest({
         method: "GET",
         endpoint,
@@ -275,7 +278,6 @@ export class StrapiService {
           }
         }
       }
-      
     } catch (error) {
       Logger.error(
         `Failed to find documents by slugs: ${slugs.join(", ")}`,

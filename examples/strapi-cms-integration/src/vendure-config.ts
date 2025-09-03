@@ -120,6 +120,7 @@ export const config: VendureConfig = {
     }),
     CmsPlugin.init({
       cmsApiKey: process.env.STRAPI_API_KEY, // Strapi API key for authentication
+      strapiBaseUrl: process.env.STRAPI_BASE_URL || "http://localhost:1337",
     }),
   ],
 };
