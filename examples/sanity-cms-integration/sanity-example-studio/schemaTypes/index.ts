@@ -1,9 +1,5 @@
-import { vendureCollection } from './vendureColleciton'
-import { vendureProductType } from './vendureProductType'
-import { vendureProductVariant } from './vendureProductVariant'
+import {vendureCollection} from './vendureCollection'
+import {vendureProductType} from './vendureProductType'
+import {vendureProductVariant} from './vendureProductVariant'
 
-export const schemaTypes = [
-  vendureCollection,
-  vendureProductType,
-  vendureProductVariant,
-]
+export const schemaTypes = [vendureCollection, vendureProductType, vendureProductVariant]
