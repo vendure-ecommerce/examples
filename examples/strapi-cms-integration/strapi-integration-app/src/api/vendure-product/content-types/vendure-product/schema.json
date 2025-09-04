@@ -1,0 +1,31 @@
+{
+  "kind": "collectionType",
+  "collectionName": "vendure_products",
+  "info": {
+    "displayName": "Vendure Product",
+    "singularName": "vendure-product",
+    "pluralName": "vendure-products"
+  },
+  "attributes": {
+    "vendureId": {
+      "type": "integer",
+      "required": true,
+      "unique": true
+    },
+    "name": {
+      "type": "string",
+      "required": true
+    },
+    "slug": {
+      "type": "string",
+      "required": true,
+      "unique": true
+    },
+    "productVariants": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::vendure-product-variant.vendure-product-variant",
+      "mappedBy": "product"
+    }
+  }
+}

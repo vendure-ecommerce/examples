@@ -1,0 +1,42 @@
+{
+  "name": "payload-cms-integration-shop",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev:server": "ts-node ./src/index.ts",
+    "dev:worker": "ts-node ./src/index-worker.ts",
+    "dev": "concurrently npm:dev:*",
+    "build": "tsc",
+    "start:server": "node ./dist/index.js",
+    "start:worker": "node ./dist/index-worker.js",
+    "start": "concurrently npm:start:*",
+    "populate": "ts-node ./src/populate.ts",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "dependencies": {
+    "@vendure/admin-ui-plugin": "3.4.1",
+    "@vendure/asset-server-plugin": "3.4.1",
+    "@vendure/core": "3.4.1",
+    "@vendure/dashboard": "^3.4.1",
+    "@vendure/email-plugin": "3.4.1",
+    "@vendure/graphiql-plugin": "3.4.1",
+    "better-sqlite3": "^12.2.0",
+    "dotenv": "17.2.1",
+    "pg": "8.16.3"
+  },
+  "devDependencies": {
+    "@nestjs/testing": "^11.1.6",
+    "@vendure/cli": "3.4.1",
+    "@vendure/testing": "3.4.1",
+    "@vitest/ui": "^2.1.2",
+    "concurrently": "9.2.1",
+    "typescript": "5.8.2",
+    "vitest": "^2.1.2"
+  },
+  "overrides": {
+    "@vendure/dashboard": {
+      "@vendure/core": "3.4.1"
+    }
+  }
+}
