@@ -69,30 +69,19 @@ export class CmsSyncService implements OnApplicationBootstrap {
    * @returns Array of Collection entities
    */
   async findCollectionsForVariant(
-    ctx: RequestContext,
     variantId: string | number,
   ): Promise<Collection[]> {
     try {
-      const collections = await this.collectionService.findAll(ctx);
-      const collectionsWithVariant: Collection[] = [];
+      const variant = await this.connection.rawConnection
+        .getRepository(ProductVariant)
+        .findOne({
+          where: {
+            id: variantId,
+          },
+          relations: ["collections"],
+        });
 
-      for (const collection of collections.items) {
-        const variantIds =
-          await this.collectionService.getCollectionProductVariantIds(
-            collection,
-            ctx,
-          );
-
-        const hasVariant = variantIds.some(
-          (id) => id.toString() === variantId.toString(),
-        );
-
-        if (hasVariant) {
-          collectionsWithVariant.push(collection);
-        }
-      }
-
-      return collectionsWithVariant;
+      return variant?.collections || [];
     } catch (error) {
       Logger.error(
         `Failed to find collections for variant ${variantId}`,
