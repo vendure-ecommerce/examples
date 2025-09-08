@@ -32,6 +32,9 @@ npm run docker:up
 # 3. Create a new example
 npm run create-example my-feature
 
+# 4. Copy (and modify) .env files
+cp .env.example .env
+
 # 4. Run the example
 cd examples/my-feature
 npm run dev
@@ -51,6 +54,7 @@ vendure-examples/
 │   ├── shop-github-auth/        # GitHub OAuth example
 │   ├── shop-google-auth/        # Google OAuth example  
 │   └── s3-file-storage/         # S3-compatible storage example
+│   └── // other examples
 ├── docker-compose.yml        # 🐳 PostgreSQL + Redis + Adminer
 ├── scripts/
 │   ├── create-example.js        # Automated example creation
