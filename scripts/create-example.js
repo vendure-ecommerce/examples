@@ -7,9 +7,13 @@ async function createExample(name) {
 
   // Step 1: Run Vendure create
   console.log(`Creating Vendure example: ${name}`);
-  execSync(`npx @vendure/create@master ${name} --log-level verbose`, {
+  execSync(`npx @vendure/create@master ${name} --ci`, {
     cwd: path.join(__dirname, "..", "examples"),
     stdio: "inherit",
+    env: {
+      ...process.env,
+      NODE_PATH: path.join(__dirname, "..", "node_modules"),
+    },
   });
 
   // Step 2: Create tsconfig.json extending base
@@ -32,21 +36,15 @@ async function createExample(name) {
 import { getBaseConfig } from '@shared/config';
 import "dotenv/config";
 
-// Add your custom plugins and configuration here
-const customPlugins = [];
-
 const baseConfig = getBaseConfig();
 
-export const config = mergeConfig(
-  baseConfig,
-  {
-    plugins: [
-      ...(baseConfig.plugins ?? []),
-      ...customPlugins,
-    ],
-    // Add any other overrides here
-  }
-);
+export const config = mergeConfig(baseConfig, {
+  plugins: [
+    ...(baseConfig.plugins ?? []),
+    // Add your custom plugins here
+  ],
+  // Add any other overrides here
+});
 `;
 
   fs.writeFileSync(configPath, configContent);
@@ -55,7 +53,7 @@ export const config = mergeConfig(
   const indexPath = path.join(exampleDir, "src", "index.ts");
   const indexContent = `
 import { runServer } from '@shared/server';
-import { config } from '@/vendure-config';
+import { config } from './vendure-config';
 
 runServer(config)
   .then(() => console.log('Server started: ${name}'))
@@ -71,7 +69,7 @@ runServer(config)
   const workerPath = path.join(exampleDir, "src", "index-worker.ts");
   const workerContent = `
 import { runWorker } from '@shared/worker';
-import { config } from '@/vendure-config';
+import { config } from './vendure-config';
 
 runWorker(config)
   .then(() => console.log('Worker started: ${name}'))
@@ -98,8 +96,12 @@ runWorker(config)
   ];
 
   vendurePackages.forEach((pkg) => {
-    delete packageJson.dependencies[pkg];
-    delete packageJson.devDependencies[pkg];
+    if (packageJson.dependencies) {
+      delete packageJson.dependencies[pkg];
+    }
+    if (packageJson.devDependencies) {
+      delete packageJson.devDependencies[pkg];
+    }
   });
 
   // Update dev scripts to use proper Node.js setup
@@ -130,4 +132,3 @@ if (!exampleName) {
 }
 
 createExample(exampleName);
-
