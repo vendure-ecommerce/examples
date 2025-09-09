@@ -9,6 +9,7 @@
     "build": "tsc",
     "start:server": "node ./dist/index.js",
     "start:worker": "node ./dist/index-worker.js",
-    "start": "concurrently npm:start:*"
+    "start": "concurrently npm:start:*",
+    "export:low-stock": "node -r ts-node/register -r dotenv/config -r tsconfig-paths/register ./src/scripts/export-low-stock-variants.ts"
   }
 }
