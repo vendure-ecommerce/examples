@@ -1,0 +1,14 @@
+{
+  "name": "export-csv",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev:server": "node -r ts-node/register -r dotenv/config -r tsconfig-paths/register ./src/index.ts",
+    "dev:worker": "node -r ts-node/register -r dotenv/config -r tsconfig-paths/register ./src/index-worker.ts",
+    "dev": "concurrently npm:dev:*",
+    "build": "tsc",
+    "start:server": "node ./dist/index.js",
+    "start:worker": "node ./dist/index-worker.js",
+    "start": "concurrently npm:start:*"
+  }
+}
