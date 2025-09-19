@@ -13,7 +13,9 @@
     "clean": "npm run clean --workspaces",
     "list:examples": "ls -la examples/",
     "migrate-db": "node scripts/migrate-db.js",
-    "reset-db": "node scripts/reset-db.js"
+    "reset-db": "node scripts/reset-db.js",
+    "populate-dev": "node -r dotenv/config scripts/populate-dev.js",
+    "build:dashboard": "cd shared/dashboard && vite build"
   },
   "keywords": [
     "vendure",
@@ -40,9 +42,11 @@
     "@vendure/cli": "3.4.0",
     "concurrently": "9.2.0",
     "ts-node": "^10.0.0",
-    "typescript": "5.8.2"
+    "typescript": "5.8.2",
+    "vite": "^6.3.5"
   },
   "workspaces": [
-    "examples/*"
+    "examples/*",
+    "shared/*"
   ]
 }
