@@ -7,6 +7,7 @@ import {
 } from "@vendure/core";
 import { BullMQJobQueuePlugin } from "@vendure/job-queue-plugin/package/bullmq";
 import { DashboardPlugin } from "@vendure/dashboard/plugin";
+import { AssetServerPlugin } from "@vendure/asset-server-plugin";
 import path from "path";
 import { GraphiqlPlugin } from "@vendure/graphiql-plugin";
 import {
@@ -49,6 +50,11 @@ export const getBaseConfig = (): VendureConfig => {
       paymentMethodHandlers: [dummyPaymentHandler],
     },
     plugins: [
+      AssetServerPlugin.init({
+        route: "assets",
+        assetUploadDir: path.join(__dirname, "../shared/static/assets"),
+        assetUrlPrefix: process.env.ASSET_URL_PREFIX || "/assets/",
+      }),
       GraphiqlPlugin.init(),
       DefaultSchedulerPlugin.init({}),
       BullMQJobQueuePlugin.init({
@@ -65,11 +71,11 @@ export const getBaseConfig = (): VendureConfig => {
       }),
       EmailPlugin.init({
         devMode: true,
-        outputPath: path.join(__dirname, "../static/email/test-emails"),
+        outputPath: path.join(__dirname, "../shared/static/email/test-emails"),
         route: "mailbox",
         handlers: defaultEmailHandlers,
         templateLoader: new FileBasedTemplateLoader(
-          path.join(__dirname, "../static/email/templates"),
+          path.join(__dirname, "../shared/static/email/templates"),
         ),
         globalTemplateVars: {
           fromAddress: '"example" <noreply@example.com>',
