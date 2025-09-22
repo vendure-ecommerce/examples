@@ -221,10 +221,11 @@ export class PayloadService {
     try {
       const response = await this.makePayloadRequest({
         method: "GET",
-        endpoint: `${collectionSlug}?where[slug][equals]=${encodeURIComponent(slug)}&limit=1`,
+        endpoint: `${collectionSlug}?where[slug][equals]=${encodeURIComponent(slug)}`,
       });
 
-      return response.docs && response.docs.length > 0 ? response.docs[0] : null;
+      // Use precise matching like Storyblok instead of just taking first result
+      return response.docs?.find((doc: any) => doc.slug === slug) || null;
     } catch (error) {
       Logger.error(`Failed to find document by slug: ${slug}`, String(error));
       return null;
@@ -253,8 +254,11 @@ export class PayloadService {
       });
 
       if (response.docs) {
+        // Validate and map results like Storyblok - only include docs that have valid slugs
         for (const doc of response.docs) {
-          documentMap.set(doc.slug, doc);
+          if (doc.slug && slugs.includes(doc.slug)) {
+            documentMap.set(doc.slug, doc);
+          }
         }
       }
     } catch (error) {
@@ -306,19 +310,23 @@ export class PayloadService {
     productSlug?: string | null,
   ): Promise<string[]> {
     if (!productSlug) {
+      Logger.warn(`No product slug provided for product ${productId}, cannot find variant documents`);
       return [];
     }
 
     const variants = await this.findProductVariants(productId);
+
+    if (variants.length === 0) {
+      Logger.warn(`No variants found for product ${productId}`);
+      return [];
+    }
 
     // Collect all variant slugs for batch lookup
     const variantSlugs = variants.map(
       (variant) => `${productSlug}-variant-${variant.id}`,
     );
 
-    if (variantSlugs.length === 0) {
-      return [];
-    }
+    Logger.debug(`Looking up ${variantSlugs.length} variant documents for product ${productId}`);
 
     // Batch lookup all variant documents at once
     const documentsMap = await this.findDocumentsBySlugs(COLLECTION_SLUG.product_variant, variantSlugs);
@@ -330,6 +338,7 @@ export class PayloadService {
       }
     });
 
+    Logger.debug(`Found ${documentIds.length} of ${variantSlugs.length} variant documents for product ${productId}`);
     return documentIds;
   }
 
@@ -352,6 +361,7 @@ export class PayloadService {
         });
 
       if (!product) {
+        Logger.warn(`No product found for variant ${variant.id} with productId ${variant.productId}`);
         return null;
       }
 
@@ -360,12 +370,18 @@ export class PayloadService {
         defaultLanguageCode,
       );
 
-      if (slug) {
-        const document = await this.findDocumentBySlug(COLLECTION_SLUG.product, slug);
-        return document?.id?.toString() || null;
+      if (!slug) {
+        Logger.warn(`No slug found for product ${product.id} in language ${defaultLanguageCode}`);
+        return null;
       }
 
-      return null;
+      const document = await this.findDocumentBySlug(COLLECTION_SLUG.product, slug);
+      if (!document) {
+        Logger.warn(`No Payload document found for product slug: ${slug}`);
+        return null;
+      }
+
+      return document.id?.toString() || null;
     } catch (error) {
       Logger.error(
         `Failed to find parent product for variant ${variant.id}`,
