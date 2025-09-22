@@ -16,11 +16,11 @@
     "resolveJsonModule": true,
     "baseUrl": ".",
     "paths": {
-      "@shared/*": ["./src/*"],
-      "@shared/config": ["./src/vendure-config.base.ts"],
-      "@shared/base": ["./src/vendure-config.base.ts"],
-      "@shared/server": ["./src/index.base.ts"],
-      "@shared/worker": ["./src/index-worker.base.ts"],
+      "@shared/*": ["./base/*"],
+      "@shared/config": ["./base/vendure-config.base.ts"],
+      "@shared/base": ["./base/vendure-config.base.ts"],
+      "@shared/server": ["./base/index.base.ts"],
+      "@shared/worker": ["./base/index-worker.base.ts"],
       "@/*": ["./src/*"]
     }
   }

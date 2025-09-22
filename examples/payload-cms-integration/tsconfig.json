@@ -2,13 +2,19 @@
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
     "outDir": "./dist",
-    "rootDir": "./src"
   },
   "include": [
     "src/**/*"
   ],
   "exclude": [
     "node_modules",
-    "dist"
+    "dist",
+    "src/plugins/**/dashboard/*",
+    "vite.*.*ts"
+  ],
+  "references": [
+    {
+      "path": "./tsconfig.dashboard.json"
+    }
   ]
 }

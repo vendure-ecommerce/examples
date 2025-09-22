@@ -1,0 +1,16 @@
+{
+  "compilerOptions": {
+    "module": "esnext",
+    "moduleResolution": "bundler",
+    "jsx": "react-jsx",
+    "paths": {
+      "@/gql": ["./src/gql/graphql.ts"],
+      "@/vdb/*": ["../../node_modules/@vendure/dashboard/src/lib/*"],
+      "@shared/config": ["../../base/vendure-config.base.ts"],
+      "@shared/base": ["../../base/vendure-config.base.ts"],
+      "@shared/server": ["../../base/index.base.ts"],
+      "@shared/worker": ["../../base/index-worker.base.ts"]
+    }
+  },
+  "include": ["src/plugins/**/dashboard/*", "src/gql/**/*.ts"]
+}

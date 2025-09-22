@@ -46,7 +46,6 @@
     "vite": "^6.3.5"
   },
   "workspaces": [
-    "examples/*",
-    "shared/*"
+    "examples/*"
   ]
 }
