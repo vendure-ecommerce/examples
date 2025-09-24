@@ -117,6 +117,39 @@ runWorker(config)
 
   fs.writeFileSync(packageJsonPath, JSON.stringify(packageJson, null, 2));
 
+  // Step 7: Ensure shared email templates exist
+  const sharedEmailDir = path.join(__dirname, "..", "shared", "static", "email", "templates");
+  if (!fs.existsSync(sharedEmailDir)) {
+    console.log("📧 Creating shared email templates...");
+
+    // Find an existing example with email templates to copy from
+    const examplesDir = path.join(__dirname, "..", "examples");
+    const existingExamples = fs.readdirSync(examplesDir);
+    let sourceEmailDir = null;
+
+    for (const example of existingExamples) {
+      const emailTemplatesPath = path.join(examplesDir, example, "static", "email", "templates");
+      if (fs.existsSync(emailTemplatesPath)) {
+        sourceEmailDir = path.join(examplesDir, example, "static", "email");
+        break;
+      }
+    }
+
+    if (sourceEmailDir) {
+      const sharedStaticDir = path.join(__dirname, "..", "shared", "static");
+      fs.mkdirSync(sharedStaticDir, { recursive: true });
+
+      execSync(`cp -r "${sourceEmailDir}" "${path.join(sharedStaticDir, "email")}"`, {
+        stdio: "inherit"
+      });
+      console.log("✅ Shared email templates created successfully!");
+    } else {
+      console.log("⚠️ No existing email templates found to copy. You may need to create them manually.");
+    }
+  } else {
+    console.log("✅ Shared email templates already exist");
+  }
+
   console.log(`✅ Example '${name}' created and configured!`);
   console.log(`📝 Next steps:`);
   console.log(`  1. cd examples/${name}`);
