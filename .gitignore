@@ -108,3 +108,9 @@ Thumbs.db
 
 
 shared/static/email/templates
+base/vendure-config.base.js.map
+base/vendure-config.base.js
+base/index.base.js.map
+base/index.base.js
+base/index-worker.base.js.map
+base/index-worker.base.js
