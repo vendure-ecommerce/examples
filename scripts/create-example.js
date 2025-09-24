@@ -22,7 +22,7 @@ async function createExample(name) {
     extends: "../../tsconfig.base.json",
     compilerOptions: {
       outDir: "./dist",
-      rootDir: "./src",
+      // rootDir: "./src",
     },
     include: ["src/**/*"],
     exclude: ["node_modules", "dist"],

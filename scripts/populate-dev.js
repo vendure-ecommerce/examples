@@ -1,4 +1,4 @@
-const { bootstrap, JobQueueService, mergeConfig } = require('@vendure/core');
+const { bootstrap, JobQueueService, mergeConfig, UserService, RequestContext } = require('@vendure/core');
 const { populate } = require('@vendure/core/cli');
 const path = require('path');
 
@@ -156,6 +156,40 @@ const initialData = {
     ],
 };
 
+/**
+ * Creates test users for development purposes
+ */
+async function createTestUsers(app) {
+    const userService = app.get(UserService);
+    const ctx = RequestContext.empty();
+
+    const testUsers = [
+        'john@example.com',
+        'jane@example.com',
+        'alice@example.com',
+        'bob@example.com',
+        'charlie@example.com',
+        'diana@example.com',
+        'edward@example.com',
+        'fiona@example.com',
+        'george@example.com',
+        'helen@example.com'
+    ];
+
+    console.log('Creating test users...');
+
+    for (const email of testUsers) {
+        try {
+            const user = await userService.createCustomerUser(ctx, email, 'test');
+            console.log(`Created user: ${email}`);
+        } catch (error) {
+            console.log(`Failed to create user ${email}:`, error.message);
+        }
+    }
+
+    console.log('Test users creation completed');
+}
+
 /* eslint-disable no-console */
 
 /**
@@ -191,7 +225,9 @@ if (require.main === module) {
             path.join(__dirname, 'assets/products.csv'),
         )
         .then(async app => {
-            console.log('Population complete! Closing app...');
+            console.log('Population complete! Creating test users...');
+            await createTestUsers(app);
+            console.log('All setup complete! Closing app...');
             return app.close();
         })
         .then(
